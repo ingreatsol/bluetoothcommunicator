@@ -16,7 +16,6 @@
 
 package com.ingreatsol.allweights.bluetoothcommunicator.library;
 
-import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.AdvertiseCallback;

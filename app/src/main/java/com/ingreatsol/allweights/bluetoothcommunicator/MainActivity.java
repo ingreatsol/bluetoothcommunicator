@@ -19,17 +19,26 @@ package com.ingreatsol.allweights.bluetoothcommunicator;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.ingreatsol.allweights.bluetoothcommunicator.fragments.ConversationFragment;
 import com.ingreatsol.allweights.bluetoothcommunicator.fragments.PairingFragment;
 import com.ingreatsol.allweights.bluetoothcommunicator.library.BluetoothCommunicator;
@@ -38,6 +47,7 @@ import com.ingreatsol.allweights.bluetoothcommunicator.tools.Tools;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     public static final int PAIRING_FRAGMENT = 0;
@@ -45,18 +55,14 @@ public class MainActivity extends AppCompatActivity {
     public static final int DEFAULT_FRAGMENT = PAIRING_FRAGMENT;
     public static final int NO_PERMISSIONS = -10;
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 2;
-    public static final String[] REQUIRED_PERMISSIONS = new String[]{
-            "android.permission.BLUETOOTH_CONNECT",
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.ACCESS_FINE_LOCATION",
-            "android.permission.ACCESS_COARSE_LOCATION",
-    };
     private Global global;
     private int currentFragment = -1;
     private final ArrayList<Callback> clientsCallbacks = new ArrayList<>();
     private CoordinatorLayout fragmentContainer;
 
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+    private ActivityResultLauncher<String[]> multiplePermissionLauncher;
+    private ActivityResultLauncher<Intent> openAppSettingsLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         global = (Global) getApplication();
+
+        initLauchers();
 
         // Clean fragments (only if the app is recreated (When user disable permission))
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -130,6 +138,72 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void selectTipeLauncherPermission(@NonNull String... permissions) {
+        if (permissions.length == 1) {
+            requestPermissionLauncher.launch(permissions[0]);
+        } else if (permissions.length > 1) {
+            multiplePermissionLauncher.launch(permissions);
+        }
+    }
+
+    private void manejarDenegacionDePermiso() {
+        ArrayList<String> permissionsShould = Tools
+                .shouldMapPermission(this, Tools.getPermissionEscanearBluetooth().toArray(new String[0]));
+        if (permissionsShould.size() > 0) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Estas seguro?")
+                    .setMessage("Allweights no puede funcionar correctamente si deniegas este permiso")
+                    .setNegativeButton("Si, denegar", (dialogCancel, which) -> dialogCancel.dismiss())
+                    .setPositiveButton("Intentar de nuevo", (dialogAcept, which) -> {
+                        selectTipeLauncherPermission(Tools.getPermissionEscanearBluetooth().toArray(new String[0]));
+                        dialogAcept.dismiss();
+                    })
+                    .show();
+        } else {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Configuración de la aplicación?")
+                    .setMessage("El permiso solicitado ha sido denegado, para activar este permiso debe ir a la configuración de la aplicación")
+                    .setNegativeButton("Entrar sin permiso", (dialogCancel, which) -> dialogCancel.dismiss())
+                    .setPositiveButton("Ir a configuración", (dialogAcept, which) -> openAppSettingsLauncher.launch(ajustesAplicacion(this)))
+                    .show();
+        }
+    }
+
+    @NonNull
+    public Intent ajustesAplicacion(@NonNull FragmentActivity fragmentActivity) {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setData(Uri.parse("package:" + fragmentActivity.getPackageName()));
+        return intent;
+    }
+
+    @SuppressLint("MissingPermission")
+    public void initLauchers() {
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        startSearch();
+                    } else {
+                        manejarDenegacionDePermiso();
+                        Toast.makeText(this, "Permisos denegados", Toast.LENGTH_LONG).show();
+                    }
+                });
+
+        multiplePermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+            boolean resultStatus = result.entrySet().stream().allMatch(Map.Entry::getValue);
+            if (resultStatus) {
+                startSearch();
+            } else {
+                manejarDenegacionDePermiso();
+                Toast.makeText(this, "Permisos denegados", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        openAppSettingsLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                result -> startSearch());
+
+    }
+
     public void setFragment(int fragmentName) {
         switch (fragmentName) {
             case PAIRING_FRAGMENT: {
@@ -178,12 +252,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        DialogInterface.OnClickListener confirmExitListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                exitFromConversation();
-            }
-        };
+        DialogInterface.OnClickListener confirmExitListener = (dialog, which) -> exitFromConversation();
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         if (fragment != null) {
             if (fragment instanceof ConversationFragment) {
@@ -222,29 +291,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public int startSearch() {
-        if (global.getBluetoothCommunicator().isBluetoothLeSupported() == BluetoothCommunicator.SUCCESS) {
-            if (Tools.hasPermissions(this, REQUIRED_PERMISSIONS)) {
-                @SuppressLint("MissingPermission") int advertisingCode = global.getBluetoothCommunicator().startAdvertising();
-                @SuppressLint("MissingPermission") int discoveringCode = global.getBluetoothCommunicator().startDiscovery();
-                if (advertisingCode == discoveringCode) {
-                    return advertisingCode;
-                }
-                if (advertisingCode == BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED || discoveringCode == BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED) {
-                    return BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED;
-                }
-                if (advertisingCode == BluetoothCommunicator.SUCCESS || discoveringCode == BluetoothCommunicator.SUCCESS) {
-                    if (advertisingCode == BluetoothCommunicator.ALREADY_STARTED || discoveringCode == BluetoothCommunicator.ALREADY_STARTED) {
-                        return BluetoothCommunicator.SUCCESS;
-                    }
-                }
-                return BluetoothCommunicator.ERROR;
-            } else {
-                requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-                return NO_PERMISSIONS;
-            }
-        } else {
+        if (global.getBluetoothCommunicator().isBluetoothLeSupported() != BluetoothCommunicator.SUCCESS) {
             return BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED;
         }
+
+        if (!Tools.hasPermissions(this, Tools.getPermissionEscanearBluetooth().toArray(new String[0]))) {
+            requestPermissions(Tools.getPermissionEscanearBluetooth().toArray(new String[0]), REQUEST_CODE_REQUIRED_PERMISSIONS);
+            return NO_PERMISSIONS;
+        }
+
+        @SuppressLint("MissingPermission") int advertisingCode = global.getBluetoothCommunicator().startAdvertising();
+        @SuppressLint("MissingPermission") int discoveringCode = global.getBluetoothCommunicator().startDiscovery();
+        if (advertisingCode == discoveringCode) {
+            return advertisingCode;
+        }
+        if (advertisingCode == BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED || discoveringCode == BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED) {
+            return BluetoothCommunicator.BLUETOOTH_LE_NOT_SUPPORTED;
+        }
+        if (advertisingCode == BluetoothCommunicator.SUCCESS || discoveringCode == BluetoothCommunicator.SUCCESS) {
+            if (advertisingCode == BluetoothCommunicator.ALREADY_STARTED || discoveringCode == BluetoothCommunicator.ALREADY_STARTED) {
+                return BluetoothCommunicator.SUCCESS;
+            }
+        }
+        return BluetoothCommunicator.ERROR;
     }
 
     public int stopSearch(boolean tryRestoreBluetoothStatus) {

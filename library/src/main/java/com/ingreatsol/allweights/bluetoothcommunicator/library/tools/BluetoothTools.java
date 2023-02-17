@@ -8,6 +8,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.jetbrains.annotations.Contract;
+
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayDeque;
@@ -179,6 +181,8 @@ public class BluetoothTools {
         /**
          * Generate a random string.
          */
+        @NonNull
+        @Contract(" -> new")
         private String nextString() {
             for (int idx = 0; idx < buf.length; ++idx) {
                 buf[idx] = (getSupportedUTFCharacters().get(random.nextInt(95)));  //si genera un carattere casuale composto da tutti i valori possibili del codice ascii normale (non esteso) per poter essere espressi da un solo byte in utf-8

@@ -110,12 +110,7 @@ public class PairingFragment extends Fragment {
                 if (peer != null) {
                     String time = DateFormat.getDateTimeInstance().format(new Date());
                     connectionRequestDialog = new RequestDialog(activity, "Accept connection request from " + peer.getName() + " ?", 15000, (dialog, which) -> activity.acceptConnection(peer), (dialog, which) -> activity.rejectConnection(peer));
-                    connectionRequestDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialog) {
-                            connectionRequestDialog = null;
-                        }
-                    });
+                    connectionRequestDialog.setOnCancelListener(dialog -> connectionRequestDialog = null);
                     connectionRequestDialog.show();
                 }
             }
@@ -166,6 +161,7 @@ public class PairingFragment extends Fragment {
                             listView.add(peer);
                         } else {
                             Peer peer1 = listView.get(index);
+                            assert bluetoothAdapter != null;
                             if (peer.isBonded(bluetoothAdapter)) {
                                 listView.set(index, peer);
                             } else if (peer1.isBonded(bluetoothAdapter)) {
@@ -255,7 +251,7 @@ public class PairingFragment extends Fragment {
         loading = view.findViewById(R.id.progressBar2);
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint({"MissingPermission", "UseSupportActionBar"})
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -294,7 +290,7 @@ public class PairingFragment extends Fragment {
         activateInputs();
         disappearLoading(true, null);
         // if you don't have permission to search, activate from here
-        if (!Tools.hasPermissions(activity, MainActivity.REQUIRED_PERMISSIONS)) {
+        if (!Tools.hasPermissions(activity, Tools.getPermissionEscanearBluetooth().toArray(new String[0]))) {
             startSearch();
         }
 
@@ -315,7 +311,7 @@ public class PairingFragment extends Fragment {
 
         activity.addCallback(communicatorCallback);
         // if you have permission to search it is activated from here
-        if (Tools.hasPermissions(activity, MainActivity.REQUIRED_PERMISSIONS)) {
+        if (Tools.hasPermissions(activity, Tools.getPermissionEscanearBluetooth().toArray(new String[0]))) {
             startSearch();
         }
     }
@@ -430,7 +426,7 @@ public class PairingFragment extends Fragment {
             }
         };
 
-        listView = new PeerListAdapter(activity, new ArrayList<Peer>(), callback);
+        listView = new PeerListAdapter(activity, new ArrayList<>(), callback);
         listViewGui.setAdapter(listView);
     }
 

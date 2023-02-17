@@ -58,6 +58,18 @@ public class Tools {
     }
 
     @NonNull
+    public static ArrayList<String> getPermissionEscanearBluetooth(){
+        ArrayList<String> list = new ArrayList<>();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            list.addAll(Arrays.asList(Permission.LOCATION));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            list.addAll(Arrays.asList(Permission.BLUETOOTH));
+        }
+        return list;
+    }
+
+    @NonNull
     public static ArrayList<String> shouldMapPermission(Activity activity, @NonNull String... permissionSend) {
         ArrayList<String> permissionsShoulShow = new ArrayList<>();
         for (String permission : permissionSend) {
@@ -66,5 +78,15 @@ public class Tools {
             }
         }
         return permissionsShoulShow;
+    }
+
+    public static final class Permission {
+        public static final String[] LOCATION = new String[]{
+                "android.permission.ACCESS_FINE_LOCATION",
+                "android.permission.ACCESS_COARSE_LOCATION"};
+        public static final String[] BLUETOOTH = new String[]{
+                "android.permission.BLUETOOTH_SCAN",
+                "android.permission.BLUETOOTH_ADVERTISE",
+                "android.permission.BLUETOOTH_CONNECT"};
     }
 }
