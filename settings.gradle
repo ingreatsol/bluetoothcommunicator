@@ -10,8 +10,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://jitpack.io"}
     }
 }
-rootProject.name = "Allwights Bluetooth Communicator"
-include ':app'
-include ':library'
+rootProject.name = "Allweights Bluetooth Communicator"
+include ':test'
+include ':bluetoothcommunicator'
