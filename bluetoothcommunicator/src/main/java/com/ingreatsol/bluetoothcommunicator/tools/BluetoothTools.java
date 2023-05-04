@@ -99,8 +99,16 @@ public class BluetoothTools {
 
     @NonNull
     public static String generateBluetoothNameId(Context context) {
-        String sharedPreferencename = PreferenceManager.getDefaultSharedPreferencesName(context);
-        SharedPreferences sharedPreferences = context.getSharedPreferences(sharedPreferencename, Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            String sharedPreferencename = PreferenceManager.getDefaultSharedPreferencesName(context);
+            sharedPreferences = context.getSharedPreferences(sharedPreferencename, Context.MODE_PRIVATE);
+        }
+        else {
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        }
+
         String id = sharedPreferences.getString("bluetoothNameId", "");
         if (Objects.isNull(id) || id.length() != 2) {
             //generazione dell'id e salvataggio

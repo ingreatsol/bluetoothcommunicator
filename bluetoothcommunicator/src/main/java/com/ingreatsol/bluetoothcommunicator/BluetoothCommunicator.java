@@ -1020,7 +1020,7 @@ public class BluetoothCommunicator {
      * To the name will be added 4 random symbols in a completely transparent way (this 4 symbols will exixts only inside BluetoothCommunicator, which removes them before the name gets on the outside),
      * this allows to have a unique identification (for BluetoothCommunicator, not for the user) even for peers with the same name
      *
-     * @param name
+     * @param name bluetooth
      * @return SUCCESS if bluetooth le is supported by the device or BLUETOOTH_LE_NOT_SUPPORTED if not (or rarely if we had a generic bluetooth problem)
      */
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
