@@ -363,7 +363,7 @@ abstract class BluetoothConnection {
         /**
          * Means that connection lost is resumed successfully.
          *
-         * @param peer
+         * @param peer resumed
          */
         public void onConnectionResumed(Peer peer) {
         }
@@ -397,8 +397,8 @@ abstract class BluetoothConnection {
          * In case the peer updated is connected and you have saved connected peers you have to update the peer if you want to successfully
          * send a message or a disconnection request to that peer.
          *
-         * @param peer
-         * @param newPeer
+         * @param peer current peer
+         * @param newPeer current peer updated
          */
         public void onPeerUpdated(Peer peer, Peer newPeer) {
         }
@@ -408,7 +408,7 @@ abstract class BluetoothConnection {
          * <br /><br />
          * Instead override onDisconnected(Peer peer, int peersLeft).
          *
-         * @param peer
+         * @param peer disconnected
          */
         void onDisconnected(Peer peer) {
         }

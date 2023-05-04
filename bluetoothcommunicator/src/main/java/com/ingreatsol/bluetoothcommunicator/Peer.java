@@ -99,7 +99,7 @@ public class Peer implements Parcelable, Cloneable {
      * If obj is a Channel it will do the same comparison with the peer of that channel (this is only for internal usage)
      * This method is for advanced usages, normally you should compare the uniqueName.
      *
-     * @param obj
+     * @param obj compare
      * @return true if equal false if not or missing attributes
      */
     @Override
@@ -134,7 +134,7 @@ public class Peer implements Parcelable, Cloneable {
      * Call bluetoothAdapter.getRemoteDevice() passing it the address of the device of this peer and return
      * what the method of getRemoteDevice return, this method is only for internal usage, you does't need to use it.
      *
-     * @param bluetoothAdapter
+     * @param bluetoothAdapter adapter
      * @return remote device
      */
     public BluetoothDevice getRemoteDevice(@NonNull BluetoothAdapter bluetoothAdapter) {
@@ -151,6 +151,7 @@ public class Peer implements Parcelable, Cloneable {
      *
      * @return unique name
      */
+    @NonNull
     public String getUniqueName() {
         return uniqueName;
     }
@@ -160,6 +161,7 @@ public class Peer implements Parcelable, Cloneable {
      *
      * @return name
      */
+    @NonNull
     public String getName() {
         return name;
     }
@@ -167,7 +169,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Sets the bluetooth device for this peer.
      *
-     * @param device
+     * @param device current device
      */
     public void setDevice(BluetoothDevice device) {
         this.device = device;
@@ -176,7 +178,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Sets the unique name of this peer.
      *
-     * @param uniqueName
+     * @param uniqueName name
      */
     public void setUniqueName(@NonNull String uniqueName) {
         if (uniqueName.length() >= 2) {
@@ -223,7 +225,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Sets if the peer is hardware connected to us, this method should not be called by the user, but only from the library.
      *
-     * @param hardwareConnected
+     * @param hardwareConnected is connected
      */
     public void setHardwareConnected(boolean hardwareConnected) {
         isHardwareConnected = hardwareConnected;
@@ -250,7 +252,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Sets if this peer is connected to us, this method should not be called by the user, but only from the library.
      *
-     * @param connected
+     * @param connected is connected
      */
     public void setConnected(boolean connected) {
         isConnected = connected;
@@ -268,15 +270,10 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Sets if this peer is trying to reconnect with us, this method should not be called by the user, but only from the library.
      *
-     * @param reconnecting
-     * @param connected
+     * @param reconnecting is reconnecting
+     * @param connected is connected
      */
     public void setReconnecting(boolean reconnecting, boolean connected) {
-        /*if (!isReconnecting && reconnecting) {
-            notifyReconnecting();
-        } else if (isReconnecting && !reconnecting && !isConnected && connected) {
-            notifyReconnected();
-        }*/
         isConnected = connected;
         isReconnecting = reconnecting;
     }
@@ -284,7 +281,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * This method is for internal usage only
      *
-     * @param requestingReconnection
+     * @param requestingReconnection is reject connection
      */
     public void setRequestingReconnection(boolean requestingReconnection) {
         if (isReconnecting || !requestingReconnection) {
@@ -295,7 +292,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * This method is for internal usage only
      *
-     * @return
+     * @return is requesting connection
      */
     public boolean isRequestingReconnection() {
         return isRequestingReconnection;
@@ -304,7 +301,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Check if this peer is in the bonded devices of the phone
      *
-     * @param bluetoothAdapter
+     * @param bluetoothAdapter adapter
      * @return is bonded
      */
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
@@ -332,52 +329,11 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Sets if the devices is disconnecting from us, this method should not be called by the user, but only from the library.
      *
-     * @param disconnecting
+     * @param disconnecting is disconnecting
      */
     public void setDisconnecting(boolean disconnecting) {
         isDisconnecting = disconnecting;
     }
-
-
-    /*public void addCallback(Callback callback) {
-        clientCallbacks.add(callback);
-    }
-
-    public int removeCallback(Callback callback) {
-        clientCallbacks.remove(callback);
-        return clientCallbacks.size();
-    }
-
-    public void notifyReconnecting() {
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < clientCallbacks.size(); i++) {
-                    clientCallbacks.get(i).onReconnecting();
-                }
-            }
-        });
-    }
-
-    public void notifyReconnected() {
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < clientCallbacks.size(); i++) {
-                    clientCallbacks.get(i).onReconnected();
-                }
-            }
-        });
-    }
-
-    public abstract static class Callback {
-        public void onReconnecting() {
-        }
-
-        public void onReconnected() {
-        }
-
-    }*/
 
     //parcelable implementation
     public Peer(@NonNull Parcel in) {
@@ -390,14 +346,6 @@ public class Peer implements Parcelable, Cloneable {
         isRequestingReconnection = in.readByte() != 0;
         isDisconnecting = in.readByte() != 0;
     }
-
-    /*public byte[] toBytes() {
-        Parcel parcel = Parcel.obtain();
-        writeToParcel(parcel, 0);
-        byte[] bytes = parcel.marshall();
-        parcel.recycle();
-        return bytes;
-    }*/
 
     public static final Creator<Peer> CREATOR = new Creator<Peer>() {
         @NonNull

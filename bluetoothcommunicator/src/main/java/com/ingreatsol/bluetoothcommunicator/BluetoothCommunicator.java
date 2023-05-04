@@ -765,7 +765,9 @@ public class BluetoothCommunicator {
         //name restore
         assert bluetoothAdapter != null;
 
-        bluetoothAdapter.setName(originalName);
+        if (originalName != null){
+            bluetoothAdapter.setName(originalName);
+        }
 
         BluetoothLeAdvertiser advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
 
