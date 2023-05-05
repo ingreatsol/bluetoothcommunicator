@@ -292,12 +292,6 @@ public class BluetoothCommunicator {
      *                 and can be only characters listed in BluetoothTools.getSupportedUTFCharacters(context) because the number of bytes for advertising beacon is limited)
      * @param strategy (for now the only supported strategy is BluetoothCommunicator.STRATEGY_P2P_WITH_RECONNECTION)
      */
-
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     public BluetoothCommunicator(final Context context, String name, int strategy) {
         this.context = context;
         this.strategy = strategy;
@@ -393,7 +387,6 @@ public class BluetoothCommunicator {
         };
         discoveryCallback = new ScanCallback() {
             @Override
-            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public synchronized void onScanResult(int callbackType, ScanResult result) {
                 super.onScanResult(callbackType, result);
                 switch (callbackType) {
@@ -454,21 +447,11 @@ public class BluetoothCommunicator {
      * @param strategy (for now the only supported strategy is BluetoothCommunicator.STRATEGY_P2P_WITH_RECONNECTION)
      * @param callback callback added, like in addCallback
      */
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     public BluetoothCommunicator(final Context context, String name, int strategy, Callback callback) {
         this(context, name, strategy);
         addCallback(callback);
     }
 
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     private void initializeConnection() {
         if (bluetoothAdapter != null) {
             BluetoothConnection.Callback connectionCallback = new BluetoothConnection.Callback() {
@@ -485,11 +468,6 @@ public class BluetoothCommunicator {
                 }
 
                 @Override
-                @RequiresPermission(allOf = {
-                        "android.permission.BLUETOOTH_ADVERTISE",
-                        "android.permission.BLUETOOTH_SCAN",
-                        "android.permission.BLUETOOTH_CONNECT"
-                })
                 public void onConnectionLost(Peer peer) {
                     super.onConnectionLost(peer);
                     synchronized (BluetoothCommunicator.this) {
@@ -517,11 +495,6 @@ public class BluetoothCommunicator {
                 }
 
                 @Override
-                @RequiresPermission(allOf = {
-                        "android.permission.BLUETOOTH_ADVERTISE",
-                        "android.permission.BLUETOOTH_SCAN",
-                        "android.permission.BLUETOOTH_CONNECT"
-                })
                 public void onConnectionResumed(Peer peer) {
                     super.onConnectionResumed(peer);
                     synchronized (BluetoothCommunicator.this) {
@@ -562,11 +535,6 @@ public class BluetoothCommunicator {
                 }
 
                 @Override
-                @RequiresPermission(allOf = {
-                        "android.permission.BLUETOOTH_ADVERTISE",
-                        "android.permission.BLUETOOTH_SCAN",
-                        "android.permission.BLUETOOTH_CONNECT"
-                })
                 public void onDisconnected(Peer peer) {
                     super.onDisconnected(peer);
                     if (connectionServer != null && connectionClient != null) {
@@ -623,10 +591,6 @@ public class BluetoothCommunicator {
      * @return SUCCESS if everithing is OK, ALREADY_STARTED if BluetoothCommunicator is already advertising, NOT_MAIN_THREAD if this method is not called
      * from the main thread, BLUETOOTH_LE_NOT_SUPPORTED if the device not supports bluetooth le (or rarely for a general bluetooth error), DESTROYING if destroy() is called before
      **/
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     public int startAdvertising() {
         synchronized (bluetoothLock) {
             if (destroying) {
@@ -667,10 +631,6 @@ public class BluetoothCommunicator {
         }
     }
 
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     private int executeStartAdvertising() {
         int advertisementSupportedCode = isBluetoothLeSupported();
 
@@ -711,10 +671,6 @@ public class BluetoothCommunicator {
      * @return SUCCESS if everithing is OK, ALREADY_STOPPED if BluetoothCommunicator is not advertising, NOT_MAIN_THREAD if this method is not called
      * from the main thread, BLUETOOTH_LE_NOT_SUPPORTED if the device not supports bluetooth le (or rarely for a general bluetooth error)
      **/
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     public int stopAdvertising(boolean tryRestoreBluetoothStatus) {
         synchronized (bluetoothLock) {
             if (connectionServer == null || bluetoothAdapter == null) {
@@ -751,10 +707,6 @@ public class BluetoothCommunicator {
         }
     }
 
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_ADVERTISE",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     private int executeStopAdvertising() {
         int advertisementSupportedCode = isBluetoothLeSupported();
 
@@ -802,10 +754,6 @@ public class BluetoothCommunicator {
      * @return SUCCESS if everithing is OK, ALREADY_STARTED if BluetoothCommunicator is already advertising, NOT_MAIN_THREAD if this method is not called
      * from the main thread, BLUETOOTH_LE_NOT_SUPPORTED if the device not supports bluetooth le (or rarely for a general bluetooth error), DESTROYING if destroy() is called before
      **/
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     public int startDiscovery() {
         // If we're already discovering, stop it
         synchronized (bluetoothLock) {
@@ -846,7 +794,6 @@ public class BluetoothCommunicator {
         }
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_SCAN")
     private int executeStartDiscovery() {
         if (bluetoothAdapter == null) {
             return BLUETOOTH_LE_NOT_SUPPORTED;
@@ -881,10 +828,6 @@ public class BluetoothCommunicator {
      * @return SUCCESS if everithing is OK, ALREADY_STOPPED if BluetoothCommunicator is not discovering, NOT_MAIN_THREAD if this method is not called
      * from the main thread, BLUETOOTH_LE_NOT_SUPPORTED if the device not supports bluetooth le (or rarely for a general bluetooth error)
      **/
-    @RequiresPermission(allOf = {
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT"
-    })
     public int stopDiscovery(boolean tryRestoreBluetoothStatus) {
         synchronized (bluetoothLock) {
             if (bluetoothAdapter == null || connectionClient == null) {
@@ -921,7 +864,6 @@ public class BluetoothCommunicator {
         }
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_SCAN")
     private int executeStopDiscovery() {
         if (bluetoothAdapter == null) {
             return BLUETOOTH_LE_NOT_SUPPORTED;
@@ -1023,7 +965,6 @@ public class BluetoothCommunicator {
      * @param name bluetooth
      * @return SUCCESS if bluetooth le is supported by the device or BLUETOOTH_LE_NOT_SUPPORTED if not (or rarely if we had a generic bluetooth problem)
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public int setName(String name) {
         if (bluetoothAdapter == null || connectionServer == null || connectionClient == null) {
             return BLUETOOTH_LE_NOT_SUPPORTED;
@@ -1071,7 +1012,6 @@ public class BluetoothCommunicator {
      * @param peer the peer that has sent the connection request that we want to accept
      * @return SUCCESS if bluetooth le is supported by the device or BLUETOOTH_LE_NOT_SUPPORTED if not (or rarely if we had a generic bluetooth problem)
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public int acceptConnection(Peer peer) {
         if (connectionServer == null) {
             return BLUETOOTH_LE_NOT_SUPPORTED;
@@ -1088,7 +1028,6 @@ public class BluetoothCommunicator {
      * @param peer the peer that has sent the connection request that you want to accept
      * @return SUCCESS if bluetooth le is supported by the device or BLUETOOTH_LE_NOT_SUPPORTED if not (or rarely if we had a generic bluetooth problem)
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public int rejectConnection(Peer peer) {
         if (connectionServer == null) {
             return BLUETOOTH_LE_NOT_SUPPORTED;
@@ -1125,7 +1064,6 @@ public class BluetoothCommunicator {
      * @return SUCCESS if everything is gone OK, BLUETOOTH_LE_NOT_SUPPORTED if bluetooth le is not supported (or rarely if we had a generic bluetooth problem)
      * or DESTROYING if destroy() is called before
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public int connect(final Peer peer) {
         if (destroying) {
             return DESTROYING;
@@ -1170,7 +1108,6 @@ public class BluetoothCommunicator {
      * @param peer connected peer you want to disconnect from
      * @return SUCCESS if bluetooth le is supported by the device or BLUETOOTH_LE_NOT_SUPPORTED if not (or rarely if we had a generic bluetooth problem)
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public int disconnect(final Peer peer) {
         synchronized (bluetoothLock) {
             if (connectionClient == null || connectionServer == null || bluetoothAdapter == null) {
@@ -1215,7 +1152,6 @@ public class BluetoothCommunicator {
      *
      * @param callback callkack
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void destroy(DestroyCallback callback) {
         if (bluetoothAdapter != null && connectionClient != null && connectionServer != null) {
             destroying = true;

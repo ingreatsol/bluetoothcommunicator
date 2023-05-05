@@ -138,7 +138,7 @@ abstract class BluetoothConnection {
         }
     }
 
-    private void sendData(final ArrayList<Channel> channels, final Message data, final Channel.MessageCallback dataCallback) {
+    private void sendData(@NonNull final ArrayList<Channel> channels, final Message data, final Channel.MessageCallback dataCallback) {
         if (channels.size() > 0) {
             Channel channel = channels.remove(0);
             if (!channel.getPeer().isDisconnecting()) {       // before it was: channel.getPeer().isConnected() || channel.getPeer().isReconnecting(), but so we don't recover the messages sent while the connection is lost
@@ -274,7 +274,8 @@ abstract class BluetoothConnection {
         return -1;
     }
 
-    private static ArrayList<Peer> clonePeerList(ArrayList<Peer> list) {
+    @NonNull
+    private static ArrayList<Peer> clonePeerList(@NonNull ArrayList<Peer> list) {
         ArrayList<Peer> clone = new ArrayList<>(list.size());
         for (Peer item : list) clone.add((Peer) item.clone());
         return clone;

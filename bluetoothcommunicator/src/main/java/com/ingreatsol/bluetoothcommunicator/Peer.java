@@ -304,7 +304,6 @@ public class Peer implements Parcelable, Cloneable {
      * @param bluetoothAdapter adapter
      * @return is bonded
      */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean isBonded(@NonNull BluetoothAdapter bluetoothAdapter) {
         ArrayList<BluetoothDevice> bondedDevices = new ArrayList<>(bluetoothAdapter.getBondedDevices());
         if (device != null) {

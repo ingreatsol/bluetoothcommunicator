@@ -65,7 +65,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
     private BluetoothGattServer bluetoothGattServer;
     private final BluetoothManager bluetoothManager;
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public BluetoothConnectionServer(final Context context, final String name, @NonNull final BluetoothAdapter bluetoothAdapter,
                                      final int strategy, final BluetoothConnectionClient client, final Callback callback) {
         super(context, name, bluetoothAdapter, strategy, callback);
@@ -77,7 +76,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         addBluetoothGattService();
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void initializeGattServer(final BluetoothConnectionClient client){
         bluetoothGattServer = bluetoothManager.openGattServer(context, new BluetoothGattServerCallback() {
             @Override
@@ -87,7 +85,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
             }
 
             @Override
-            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public synchronized void onCharacteristicWriteRequest(final BluetoothDevice device, final int requestId,
                                                                   final BluetoothGattCharacteristic characteristic, boolean preparedWrite,
                                                                   boolean responseNeeded, final int offset, final byte[] value) {
@@ -96,7 +93,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
             }
 
             @Override
-            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onCharacteristicReadRequest(final BluetoothDevice device, final int requestId, final int offset, final BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
                 onRequestCharacteristicRead(device, requestId, offset, characteristic);
@@ -157,7 +153,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onRequestCharacteristicRead(final BluetoothDevice device, final int requestId, final int offset, final BluetoothGattCharacteristic characteristic){
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -181,7 +176,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void addBluetoothGattService(){
         BluetoothGattService service = new BluetoothGattService(BluetoothConnection.APP_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
@@ -205,7 +199,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         bluetoothGattServer.addService(service);
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onRequestCharacteristicWrite(final BluetoothDevice device, final int requestId,
                                               final BluetoothGattCharacteristic characteristic,
                                               final int offset, final byte[] value){
@@ -470,7 +463,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void acceptConnection(final Peer peer) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -486,7 +478,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void rejectConnection(final Peer peer) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -545,7 +536,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void close() {
         bluetoothGattServer.close();
     }

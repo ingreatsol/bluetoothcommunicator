@@ -254,7 +254,7 @@ abstract class Channel {
         return receivedData;
     }
 
-    public void addReceivedMessage(BluetoothMessage message) {
+    public void addReceivedMessage(@NonNull BluetoothMessage message) {
         if(message.getId().isMax()){
             receivedMessages.clear();
         }else{

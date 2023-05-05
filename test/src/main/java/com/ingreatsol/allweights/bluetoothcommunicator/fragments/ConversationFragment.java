@@ -165,7 +165,7 @@ public class ConversationFragment extends Fragment {
                     Message message = new Message(global, "m", editText.getText().toString(), global.getBluetoothCommunicator().getConnectedPeersList().get(0));
                     global.getBluetoothCommunicator().sendMessage(message);
                     editText.setText("");
-                    //aggiunta del messaggio alla lista dei messaggi
+                    //add the message to the message list
                     mAdapter.addMessage(message);
                     //smooth scroll
                     smoothScroller.setTargetPosition(mAdapter.getItemCount() - 1);

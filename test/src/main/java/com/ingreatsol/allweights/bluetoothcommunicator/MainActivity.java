@@ -16,7 +16,6 @@
 
 package com.ingreatsol.allweights.bluetoothcommunicator;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -191,7 +190,19 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         multiplePermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-            boolean resultStatus = result.entrySet().stream().allMatch(Map.Entry::getValue);
+            boolean resultStatus = false;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                resultStatus = result.entrySet().stream().allMatch(Map.Entry::getValue);
+            } else {
+                for (boolean entry : result.values()) {
+                    if (!entry) {
+                        resultStatus = false;
+                        break;
+                    } else {
+                        resultStatus = true;
+                    }
+                }
+            }
             if (resultStatus) {
                 startSearch();
             } else {
@@ -362,7 +373,6 @@ public class MainActivity extends AppCompatActivity {
     public CoordinatorLayout getFragmentContainer() {
         return fragmentContainer;
     }
-
 
 
     public void addCallback(Callback callback) {
