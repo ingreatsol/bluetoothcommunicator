@@ -47,8 +47,11 @@ abstract class BluetoothConnection {
     protected Channel.DisconnectionCallback disconnectionCallback;
 
 
-    protected BluetoothConnection(final Context context, String uniqueName, BluetoothAdapter bluetoothAdapter,
-                                  int strategy, Callback callback) {
+    protected BluetoothConnection(final Context context,
+                                  String uniqueName,
+                                  BluetoothAdapter bluetoothAdapter,
+                                  int strategy,
+                                  Callback callback) {
         this.context = context;
         this.strategy = strategy;
         this.callback = callback;

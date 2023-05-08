@@ -22,6 +22,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,7 +37,6 @@ public class ButtonSearch extends AppCompatImageButton {
     private boolean visible = true;
     private boolean animating = false;
     private final ArrayList<CustomAnimator.EndListener> listeners = new ArrayList<>();
-    private OnClickListener clickListener;
     private int drawableId = R.drawable.cancel_icon;
 
 
@@ -188,12 +188,6 @@ public class ButtonSearch extends AppCompatImageButton {
         while (listeners.size() > 0) {
             listeners.remove(0).onAnimationEnd();
         }
-    }
-
-    @Override
-    public void setOnClickListener(@Nullable OnClickListener l) {
-        clickListener = l;
-        super.setOnClickListener(clickListener);
     }
 
     public boolean isSearching() {

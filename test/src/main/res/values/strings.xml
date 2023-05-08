@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Allwights Bluetooth Communicator</string>
+    <string name="it_is_not_possible_to_search_for_devices_without_location_permission_go_to_the_settings_to_grant_it_or_reinstall_the_app">It is not possible to search for devices without location permission, go to the settings to grant it, or reinstall the app</string>
+    <string name="this_screen_will_search_and_make_us_visible_to_other_devices_that_use_bluetoothcommunicator_to_be_able_to_establish_a_connection_with_them_and_start_the_conversation">This screen will search and make us visible to other devices that use BluetoothCommunicator to be able to establish a connection with them and start the conversation</string>
+    <string name="no_devices">no devices</string>
+    <string name="it_is_not_possible_to_search_because_this_device_does_not_have_bluetooth_low_energy">It is not possible to search because this device does not have Bluetooth Low Energy</string>
 </resources>

@@ -140,6 +140,7 @@ class ClientChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void readPhy() {
         synchronized (lock) {
             if (bluetoothGatt != null && getPeer().isFullyConnected()) {
@@ -168,6 +169,7 @@ class ClientChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyConnectionResumed() {
         synchronized (lock) {
             boolean success = false;
@@ -186,6 +188,7 @@ class ClientChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyNameUpdated(String uniqueName) {
         synchronized (lock) {
             boolean success = false;
@@ -204,6 +207,7 @@ class ClientChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyDisconnection(DisconnectionNotificationCallback disconnectionNotificationCallback) {
         synchronized (lock) {
             boolean success = false;
@@ -224,6 +228,7 @@ class ClientChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean disconnect(DisconnectionCallback disconnectionCallback) {
         synchronized (lock) {
             if (super.disconnect(disconnectionCallback)) {
@@ -256,6 +261,7 @@ class ClientChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void destroy() {
         synchronized (lock) {
             super.destroy();

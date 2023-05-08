@@ -43,40 +43,49 @@ class BluetoothConnectionClient extends BluetoothConnection {
     private final BluetoothGattCallback channelsCallback;
     private final ConnectionDeque pendingConnections = new ConnectionDeque();
 
-    public BluetoothConnectionClient(final Context context, String uniqueName, @NonNull final BluetoothAdapter bluetoothAdapter, final int strategy, final Callback callback) {
+    public BluetoothConnectionClient(final Context context,
+                                     String uniqueName,
+                                     @NonNull final BluetoothAdapter bluetoothAdapter,
+                                     final int strategy, final Callback callback) {
         super(context, uniqueName, bluetoothAdapter, strategy, callback);
         channelsCallback = new BluetoothGattCallback() {
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onConnectionStateChange(final BluetoothGatt gatt, int status, final int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
                 onChangeConnectionState(gatt, status, newState);
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
                 onDiscoveredServices(gatt);
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onMtuChanged(final BluetoothGatt gatt, int mtu, int status) {
                 super.onMtuChanged(gatt, mtu, status);
                 onChangedMtu(gatt);
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onCharacteristicChanged(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicChanged(gatt, characteristic);
                 onChangedCharacteristic(gatt, characteristic);
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
                 super.onCharacteristicRead(gatt, characteristic, status);
                 onReadCharacteristic(gatt, characteristic, status);
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
                 super.onCharacteristicWrite(gatt, characteristic, status);
                 onWriteCharacteristic(gatt, characteristic, status);
@@ -84,6 +93,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         };
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onChangeConnectionState(final BluetoothGatt gatt, int status, final int newState) {
         mainHandler.post(() -> {
             final BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
@@ -95,6 +105,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onWriteCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -152,6 +163,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onReadCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
         Log.e("readResponse", "received");
         mainHandler.post(() -> {
@@ -201,6 +213,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onChangedCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -306,6 +319,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onConnected(@NonNull final BluetoothGatt gatt) {
         synchronized (channelsLock) {
             int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
@@ -337,12 +351,8 @@ class BluetoothConnectionClient extends BluetoothConnection {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onDisconnected(final BluetoothGatt gatt) {
-        ArrayList<String> channelsNames = new ArrayList<>();
-        for (Channel channel : channels) {
-            channelsNames.add(channel.getPeer().getDevice().getAddress() + " ");
-        }
-
         synchronized (channelsLock) {
             gatt.close();
             int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
@@ -398,6 +408,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onDiscoveredServices(final BluetoothGatt gatt) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -434,6 +445,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onChangedMtu(final BluetoothGatt gatt) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -478,6 +490,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void connect(final Peer peer) {
         mainHandler.post(() -> {
             if (pendingConnections.addLast(peer)) {
@@ -488,6 +501,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void reconnect(@NonNull Peer peer) {
         if (pendingConnections.addLast((Peer) peer.clone())) {
             if (pendingConnections.size() == 1) {
@@ -496,6 +510,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void connect() {
         synchronized (channelsLock) {
             Peer peer = pendingConnections.peekFirst();
@@ -571,6 +586,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });    // to cancel a possible connection in progress and to notify the disconnection
     }
 
+    @SuppressWarnings({"ConstantConditions", "JavaReflectionMemberAccess"})
     private boolean refreshDeviceCache(BluetoothGatt gatt) {
         try {
             Method localMethod = gatt.getClass().getMethod("refresh");
@@ -581,6 +597,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         return false;
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void onReconnectingPeerFound(final Peer peer) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -601,6 +618,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     protected void notifyConnectionSuccess(@NonNull Channel channel) {
         channel.resetConnectionCompleteTimer();
         channel.getPeer().setConnected(true);
@@ -609,6 +627,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         pendingConnections.removeFirst();   // remove the peer that ended the connection
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void notifyConnectionRejected(@NonNull Channel channel) {
         channel.resetConnectionCompleteTimer();
         channel.disconnect(disconnectionCallback);
@@ -617,6 +636,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         pendingConnections.removeFirst();   // remove the peer that ended the connection
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void notifyConnectionFailed(Channel channel) {
         channels.remove(channel);
         callback.onConnectionFailed((Peer) channel.getPeer().clone(), BluetoothCommunicator.ERROR);
@@ -649,6 +669,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     protected void notifyConnectionResumed(@NonNull Channel channel) {
         channel.resetConnectionCompleteTimer();
         int index = channels.indexOf(channel);
@@ -669,6 +690,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     protected void notifyDisconnection(@NonNull Channel channel) {
         pendingConnections.remove(channel.getPeer());   // remove the peer in case it is trying to reconnect
 
@@ -688,6 +710,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
             return false;
         }
 
+        @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
         private void remove(Peer peer) {
             int index = indexOf(peer);
             pendingConnections.remove(peer);
@@ -696,6 +719,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
             }
         }
 
+        @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
         private void removeFirst() {
             if (pendingConnections.size() > 0) {
                 pendingConnections.remove(pendingConnections.size() - 1);

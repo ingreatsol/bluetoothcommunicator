@@ -281,6 +281,7 @@ public class Message implements Parcelable, Cloneable {
         return bluetoothMessages;
     }
 
+    @NonNull
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();

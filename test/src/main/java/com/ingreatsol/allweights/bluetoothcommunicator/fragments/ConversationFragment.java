@@ -27,11 +27,11 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -130,7 +130,7 @@ public class ConversationFragment extends Fragment {
         activity = (MainActivity) requireActivity();
         global = (Global) activity.getApplication();
         Toolbar toolbar = activity.findViewById(R.id.toolbarConversation);
-        activity.setActionBar(toolbar);
+        activity.setSupportActionBar(toolbar);
         // we give the constraint layout the information on the system measures (status bar etc.), which has the fragmentContainer,
         // because they are not passed to it if started with a Transaction and therefore it overlaps the status bar because it fitsSystemWindows does not work
         WindowInsets windowInsets = activity.getFragmentContainer().getRootWindowInsets();

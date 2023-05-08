@@ -23,6 +23,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -58,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private Global global;
     private int currentFragment = -1;
     private final ArrayList<Callback> clientsCallbacks = new ArrayList<>();
-    private CoordinatorLayout fragmentContainer;
+    private FrameLayout fragmentContainer;
 
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private ActivityResultLauncher<String[]> multiplePermissionLauncher;
@@ -329,8 +330,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public int stopSearch(boolean tryRestoreBluetoothStatus) {
-        @SuppressLint("MissingPermission") int advertisingCode = global.getBluetoothCommunicator().stopAdvertising(tryRestoreBluetoothStatus);
-        @SuppressLint("MissingPermission") int discoveringCode = global.getBluetoothCommunicator().stopDiscovery(tryRestoreBluetoothStatus);
+        @SuppressLint("MissingPermission") int advertisingCode = global.getBluetoothCommunicator().stopAdvertising();
+        @SuppressLint("MissingPermission") int discoveringCode = global.getBluetoothCommunicator().stopDiscovery();
         if (advertisingCode == discoveringCode) {
             return advertisingCode;
         }
@@ -370,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
         return global.getBluetoothCommunicator().disconnect(peer);
     }
 
-    public CoordinatorLayout getFragmentContainer() {
+    public FrameLayout getFragmentContainer() {
         return fragmentContainer;
     }
 

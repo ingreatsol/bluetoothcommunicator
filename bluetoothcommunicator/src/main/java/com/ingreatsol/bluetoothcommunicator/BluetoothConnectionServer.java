@@ -20,6 +20,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
@@ -41,6 +42,7 @@ import java.util.UUID;
 
 class BluetoothConnectionServer extends BluetoothConnection {
     //costants
+    public static final String TAG = "BluetoothConnectionServer";
     public static final UUID CONNECTION_REQUEST_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0857350c7a66");
     public static final UUID CONNECTION_RESPONSE_UUID = UUID.fromString("fa87c0d0-adac-11de-8a39-0857350c7a64");
     public static final UUID CONNECTION_RESUMED_SEND_UUID = UUID.fromString("fa87c0d1-acbc-11de-8e32-0857350c7a41");
@@ -48,13 +50,9 @@ class BluetoothConnectionServer extends BluetoothConnection {
     public static final UUID MTU_REQUEST_UUID = UUID.fromString("fa87c0d4-afac-11de-8a39-0857350c7a60");
     public static final UUID MTU_RESPONSE_UUID = UUID.fromString("fa87c0d5-adac-11de-8a39-0857350c7a61");
     public static final UUID MESSAGE_SEND_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0830350c9a66");
-    //public static final UUID EXECUTE_MESSAGE_SEND_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0830350c9a13");
     public static final UUID DATA_SEND_UUID = UUID.fromString("fa87c0d0-afac-11de-8a33-0830350c9a66");
-    //public static final UUID EXECUTE_DATA_SEND_UUID = UUID.fromString("fa87c0d0-afac-11db-8a34-0830350c9a13");
     public static final UUID MESSAGE_RECEIVE_UUID = UUID.fromString("fa87c0d0-afac-11dc-8a39-0850350c8a66");
-    //public static final UUID EXECUTE_MESSAGE_RECEIVE_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0830350c9a27");
     public static final UUID DATA_RECEIVE_UUID = UUID.fromString("fa87c0d0-afac-11dd-8a32-0850350c8a66");
-    //public static final UUID EXECUTE_DATA_RECEIVE_UUID = UUID.fromString("fa87c0d0-afac-11dd-8a31-0830350c9a27");
     public static final UUID READ_RESPONSE_MESSAGE_RECEIVED_UUID = UUID.fromString("fa87c0d0-aaac-11df-8a38-0897350c8a60");
     public static final UUID READ_RESPONSE_DATA_RECEIVED_UUID = UUID.fromString("fa87c0d0-aaac-11df-8a38-0897350c8f65");
     public static final UUID NAME_UPDATE_SEND_UUID = UUID.fromString("fa87c0d4-afab-11de-8a39-0857350c7a42");
@@ -64,27 +62,42 @@ class BluetoothConnectionServer extends BluetoothConnection {
     //objects
     private BluetoothGattServer bluetoothGattServer;
     private final BluetoothManager bluetoothManager;
+    private final BluetoothConnectionClient client;
 
-    public BluetoothConnectionServer(final Context context, final String name, @NonNull final BluetoothAdapter bluetoothAdapter,
-                                     final int strategy, final BluetoothConnectionClient client, final Callback callback) {
+    public BluetoothConnectionServer(final Context context,
+                                     final String name,
+                                     @NonNull final BluetoothAdapter bluetoothAdapter,
+                                     final int strategy,
+                                     final BluetoothConnectionClient client,
+                                     final Callback callback) {
         super(context, name, bluetoothAdapter, strategy, callback);
 
-        bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-
-        initializeGattServer(client);
-
-        addBluetoothGattService();
+        this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        this.client = client;
     }
 
-    private void initializeGattServer(final BluetoothConnectionClient client){
+    public boolean isGattServerNotInitialized() {
+        return bluetoothGattServer == null;
+    }
+
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+    public void initilizeGatServer() {
+        initializeGattServer(client);
+        addBluetoothGattService();
+        Log.d(TAG, "Initialized GattServer");
+    }
+
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+    private void initializeGattServer(final BluetoothConnectionClient client) {
         bluetoothGattServer = bluetoothManager.openGattServer(context, new BluetoothGattServerCallback() {
             @Override
             public void onConnectionStateChange(BluetoothDevice device, int status, final int newState) {
                 super.onConnectionStateChange(device, status, newState);
-                onChangeConnectionState(device,newState,client);
+                onChangeConnectionState(device, newState, client);
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public synchronized void onCharacteristicWriteRequest(final BluetoothDevice device, final int requestId,
                                                                   final BluetoothGattCharacteristic characteristic, boolean preparedWrite,
                                                                   boolean responseNeeded, final int offset, final byte[] value) {
@@ -93,6 +106,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
             }
 
             @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onCharacteristicReadRequest(final BluetoothDevice device, final int requestId, final int offset, final BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
                 onRequestCharacteristicRead(device, requestId, offset, characteristic);
@@ -113,10 +127,35 @@ class BluetoothConnectionServer extends BluetoothConnection {
             public void onPhyUpdate(BluetoothDevice device, int txPhy, int rxPhy, int status) {
                 super.onPhyUpdate(device, txPhy, rxPhy, status);
             }
+
+            @Override
+            public void onServiceAdded(int status, BluetoothGattService service) {
+                super.onServiceAdded(status, service);
+            }
+
+            @Override
+            public void onDescriptorReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattDescriptor descriptor) {
+                super.onDescriptorReadRequest(device, requestId, offset, descriptor);
+            }
+
+            @Override
+            public void onDescriptorWriteRequest(BluetoothDevice device, int requestId, BluetoothGattDescriptor descriptor, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+                super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value);
+            }
+
+            @Override
+            public void onExecuteWrite(BluetoothDevice device, int requestId, boolean execute) {
+                super.onExecuteWrite(device, requestId, execute);
+            }
+
+            @Override
+            public void onPhyRead(BluetoothDevice device, int txPhy, int rxPhy, int status) {
+                super.onPhyRead(device, txPhy, rxPhy, status);
+            }
         });
     }
 
-    private void onSentNotification(final BluetoothDevice device, final int status){
+    private void onSentNotification(final BluetoothDevice device, final int status) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
                 int index = channels.indexOf(new Peer(device, null, true));
@@ -153,7 +192,8 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    private void onRequestCharacteristicRead(final BluetoothDevice device, final int requestId, final int offset, final BluetoothGattCharacteristic characteristic){
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+    private void onRequestCharacteristicRead(final BluetoothDevice device, final int requestId, final int offset, final BluetoothGattCharacteristic characteristic) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
                 int index = channels.indexOf(new Peer(device, null, true));
@@ -176,7 +216,8 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    private void addBluetoothGattService(){
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+    private void addBluetoothGattService() {
         BluetoothGattService service = new BluetoothGattService(BluetoothConnection.APP_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
         service.addCharacteristic(new BluetoothGattCharacteristic(CONNECTION_REQUEST_UUID, BluetoothGattCharacteristic.PROPERTY_WRITE, BluetoothGattCharacteristic.PERMISSION_WRITE));
@@ -199,9 +240,10 @@ class BluetoothConnectionServer extends BluetoothConnection {
         bluetoothGattServer.addService(service);
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onRequestCharacteristicWrite(final BluetoothDevice device, final int requestId,
                                               final BluetoothGattCharacteristic characteristic,
-                                              final int offset, final byte[] value){
+                                              final int offset, final byte[] value) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
                 int index = channels.indexOf(new Peer(device, null, true));
@@ -267,7 +309,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
                         Peer sender = (Peer) channels.get(index).getPeer().clone();
                         BluetoothMessage subMessage = BluetoothMessage.createFromBytes(context, sender, value);
                         if (subMessage != null) {
-                            if(!channels.get(index).getReceivedMessages().contains(subMessage)) {
+                            if (!channels.get(index).getReceivedMessages().contains(subMessage)) {
                                 int messageIndex = channels.get(index).getReceivingMessages().indexOf(subMessage);
                                 if (messageIndex == -1) {
                                     channels.get(index).getReceivingMessages().add(subMessage);
@@ -296,7 +338,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
                         Peer sender = (Peer) channels.get(index).getPeer().clone();
                         BluetoothMessage subData = BluetoothMessage.createFromBytes(context, sender, value);
                         if (subData != null) {
-                            if(!channels.get(index).getReceivedData().contains(subData)) {
+                            if (!channels.get(index).getReceivedData().contains(subData)) {
                                 int dataIndex = channels.get(index).getReceivingData().indexOf(subData);
                                 if (dataIndex == -1) {
                                     channels.get(index).getReceivingData().add(subData);
@@ -365,96 +407,94 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
-    private void onChangeConnectionState(BluetoothDevice device, final int newState, final BluetoothConnectionClient client){
+    private void onChangeConnectionState(BluetoothDevice device, final int newState, final BluetoothConnectionClient client) {
         final Peer peer = new Peer(device, null, false);
-        mainHandler.post(new Runnable() {   //anche se non serve si mette solo per questioni di simmetria col server a livello programmatico
-            @Override
-            public void run() {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
+        //anche se non serve si mette solo per questioni di simmetria col server a livello programmatico
+        mainHandler.post(() -> {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
 
-                    synchronized (channelsLock) {
-                        int index;
-                        if (!client.getConnectedPeers().contains(peer) && !channels.contains(peer)) {   // the client object is used to manage synchronization with the client to avoid adding a device that connects to the latter instead of us
-                            channels.add(new ServerChannel(context, peer, bluetoothAdapter));
-                            index = channels.size() - 1;
+                synchronized (channelsLock) {
+                    int index;
+                    if (!client.getConnectedPeers().contains(peer) && !channels.contains(peer)) {   // the client object is used to manage synchronization with the client to avoid adding a device that connects to the latter instead of us
+                        channels.add(new ServerChannel(context, peer, bluetoothAdapter));
+                        index = channels.size() - 1;
+                        ((ServerChannel) channels.get(index)).setBluetoothGattServer(bluetoothGattServer);
+                        channels.get(index).getPeer().setHardwareConnected(true);
+
+                    } else {
+                        index = channels.indexOf(peer);
+                        if (index != -1) {
                             ((ServerChannel) channels.get(index)).setBluetoothGattServer(bluetoothGattServer);
                             channels.get(index).getPeer().setHardwareConnected(true);
-
-                        } else {
-                            index = channels.indexOf(peer);
-                            if (index != -1) {
-                                ((ServerChannel) channels.get(index)).setBluetoothGattServer(bluetoothGattServer);
-                                channels.get(index).getPeer().setHardwareConnected(true);
-                                if (channels.get(index).getPeer().isReconnecting()) {
-                                    // the connection is recovering so we reset the timer, so in case of failure we will still have a disconnection
-                                    channels.get(index).resetReconnectionTimer();
-                                }
+                            if (channels.get(index).getPeer().isReconnecting()) {
+                                // the connection is recovering so we reset the timer, so in case of failure we will still have a disconnection
+                                channels.get(index).resetReconnectionTimer();
                             }
-
                         }
-                        if (index != -1) {
-                            final Channel channel = channels.get(index);
-                            channel.startConnectionCompleteTimer(new Timer.Callback() {
-                                @Override
-                                public void onFinished() {
-                                    mainHandler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            // means that the connection failed because it did not happen completely by the end of the timer
-                                            if (channel.getPeer().isReconnecting()) {
-                                                stopReconnection(channel);
-                                            } else {
-                                                channel.disconnect(disconnectionCallback);
-                                            }
+
+                    }
+                    if (index != -1) {
+                        final Channel channel = channels.get(index);
+                        channel.startConnectionCompleteTimer(new Timer.Callback() {
+                            @Override
+                            public void onFinished() {
+                                mainHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // means that the connection failed because it did not happen completely by the end of the timer
+                                        if (channel.getPeer().isReconnecting()) {
+                                            stopReconnection(channel);
+                                        } else {
+                                            channel.disconnect(disconnectionCallback);
                                         }
-                                    });
-                                }
-                            });
-                        }
-                    }
-
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    ArrayList<String> channelsNames = new ArrayList<>();
-                    for (Channel channel : channels) {
-                        channelsNames.add(channel.getPeer().getDevice().getAddress() + " ");
-                    }
-
-                    synchronized (channelsLock) {
-                        final int index = channels.indexOf(peer);
-                        if (index != -1) {
-                            ((ServerChannel) channels.get(index)).setBluetoothGattServer(null);
-                            channels.get(index).getPeer().setHardwareConnected(false);
-
-                            if (channels.get(index).getPeer().isDisconnecting()) {
-                                channels.get(index).onDisconnected();
+                                    }
+                                });
                             }
+                        });
+                    }
+                }
 
-                            if (channels.get(index).getPeer().isConnected()) {
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                ArrayList<String> channelsNames = new ArrayList<>();
+                for (Channel channel : channels) {
+                    channelsNames.add(channel.getPeer().getDevice().getAddress() + " ");
+                }
+
+                synchronized (channelsLock) {
+                    final int index = channels.indexOf(peer);
+                    if (index != -1) {
+                        ((ServerChannel) channels.get(index)).setBluetoothGattServer(null);
+                        channels.get(index).getPeer().setHardwareConnected(false);
+
+                        if (channels.get(index).getPeer().isDisconnecting()) {
+                            channels.get(index).onDisconnected();
+                        }
+
+                        if (channels.get(index).getPeer().isConnected()) {
+                            if (channels.get(index).getPeer().isDisconnecting()) {
+                                // disconnection
+                                notifyDisconnection(channels.get(index));
+
+                            } else {
+                                // connection lost
+                                notifyConnectionLost(channels.get(index));
+                            }
+                        } else {
+                            if (channels.get(index).getPeer().isReconnecting()) {
                                 if (channels.get(index).getPeer().isDisconnecting()) {
-                                    // disconnection
+                                    // we had a disconnection after the stopReconnection call (due to the latter method)
                                     notifyDisconnection(channels.get(index));
 
                                 } else {
-                                    // connection lost
-                                    notifyConnectionLost(channels.get(index));
+                                    // we had a disconnect between the hw connection and the complete connection
+                                    stopReconnection(channels.get(index));
+
                                 }
+
                             } else {
-                                if (channels.get(index).getPeer().isReconnecting()) {
-                                    if (channels.get(index).getPeer().isDisconnecting()) {
-                                        // we had a disconnection after the stopReconnection call (due to the latter method)
-                                        notifyDisconnection(channels.get(index));
-
-                                    } else {
-                                        // we had a disconnect between the hw connection and the complete connection
-                                        stopReconnection(channels.get(index));
-
-                                    }
-
-                                } else {
-                                    // means that there has been a disconnect between the connection request and its acceptance.
-                                    // we delete the disconnected channel
-                                    channels.remove(index);
-                                }
+                                // means that there has been a disconnect between the connection request and its acceptance.
+                                // we delete the disconnected channel
+                                channels.remove(index);
                             }
                         }
                     }
@@ -463,6 +503,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void acceptConnection(final Peer peer) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -478,6 +519,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void rejectConnection(final Peer peer) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -536,6 +578,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void close() {
         bluetoothGattServer.close();
     }

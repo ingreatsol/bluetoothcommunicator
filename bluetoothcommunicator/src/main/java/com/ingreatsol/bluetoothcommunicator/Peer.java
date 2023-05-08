@@ -24,6 +24,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
 import org.jetbrains.annotations.Contract;
@@ -46,6 +47,7 @@ public class Peer implements Parcelable, Cloneable {
     private String uniqueName;
     @NonNull
     private String name;
+    @Nullable
     private BluetoothDevice device;
     private boolean isHardwareConnected = false;
     private boolean isConnected;
@@ -59,11 +61,11 @@ public class Peer implements Parcelable, Cloneable {
      * This constructor is used internally by BluetoothCommunicator, you shouldn't create a Peer but instead use the peers founded by
      * the discovery.
      *
-     * @param device device
-     * @param uniqueName uniqueName
+     * @param device      device
+     * @param uniqueName  uniqueName
      * @param isConnected isConnected
      */
-    public Peer(BluetoothDevice device, String uniqueName, boolean isConnected) {
+    public Peer(@Nullable BluetoothDevice device, @Nullable String uniqueName, boolean isConnected) {
         mainHandler = new Handler(Looper.getMainLooper());
         this.device = device;
         if (uniqueName == null || uniqueName.length() < 2) {
@@ -126,6 +128,7 @@ public class Peer implements Parcelable, Cloneable {
      *
      * @return bluetooth device
      */
+    @Nullable
     public BluetoothDevice getDevice() {
         return device;
     }
@@ -137,8 +140,12 @@ public class Peer implements Parcelable, Cloneable {
      * @param bluetoothAdapter adapter
      * @return remote device
      */
+    @Nullable
     public BluetoothDevice getRemoteDevice(@NonNull BluetoothAdapter bluetoothAdapter) {
-        return bluetoothAdapter.getRemoteDevice(device.getAddress());
+        if (device != null) {
+            return bluetoothAdapter.getRemoteDevice(device.getAddress());
+        }
+        return null;
     }
 
     /**
@@ -171,7 +178,7 @@ public class Peer implements Parcelable, Cloneable {
      *
      * @param device current device
      */
-    public void setDevice(BluetoothDevice device) {
+    public void setDevice(@Nullable BluetoothDevice device) {
         this.device = device;
     }
 
@@ -198,13 +205,14 @@ public class Peer implements Parcelable, Cloneable {
         return name;
     }
 
+    @NonNull
     @Override
     public Object clone() {
         try {
             return super.clone();
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
-            return null;
+            return new Peer(this);
         }
     }
 
@@ -243,7 +251,7 @@ public class Peer implements Parcelable, Cloneable {
     /**
      * Returns true if this peer is connected and is not reconnecting
      *
-     * @return (isConnected && !isReconnecting)
+     * @return (isConnected & & ! isReconnecting)
      */
     public boolean isFullyConnected() {
         return isConnected && !isReconnecting;
@@ -271,7 +279,7 @@ public class Peer implements Parcelable, Cloneable {
      * Sets if this peer is trying to reconnect with us, this method should not be called by the user, but only from the library.
      *
      * @param reconnecting is reconnecting
-     * @param connected is connected
+     * @param connected    is connected
      */
     public void setReconnecting(boolean reconnecting, boolean connected) {
         isConnected = connected;
@@ -304,6 +312,7 @@ public class Peer implements Parcelable, Cloneable {
      * @param bluetoothAdapter adapter
      * @return is bonded
      */
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean isBonded(@NonNull BluetoothAdapter bluetoothAdapter) {
         ArrayList<BluetoothDevice> bondedDevices = new ArrayList<>(bluetoothAdapter.getBondedDevices());
         if (device != null) {

@@ -145,6 +145,7 @@ class ServerChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void readPhy() {
         synchronized (lock) {
             if (bluetoothGattServer != null && getPeer().isFullyConnected()) {
@@ -155,6 +156,7 @@ class ServerChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean acceptConnection() {
         synchronized (lock) {
             boolean success = false;
@@ -173,6 +175,7 @@ class ServerChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean rejectConnection() {
         synchronized (lock) {
             boolean success = false;
@@ -191,6 +194,7 @@ class ServerChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyConnectionResumed() {
         synchronized (lock) {
             boolean success = false;
@@ -209,6 +213,7 @@ class ServerChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyConnectionResumedRejected() {
         synchronized (lock) {
             boolean success = false;
@@ -227,6 +232,7 @@ class ServerChannel extends Channel {
         }
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyNameUpdated(String name) {
         synchronized (lock) {
             boolean success = false;
@@ -246,6 +252,7 @@ class ServerChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyDisconnection(DisconnectionNotificationCallback disconnectionNotificationCallback) {
         synchronized (lock) {
             boolean success = false;
@@ -267,6 +274,7 @@ class ServerChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean disconnect(DisconnectionCallback disconnectionCallback) {
         synchronized (lock) {
             if (super.disconnect(disconnectionCallback)) {
@@ -280,6 +288,7 @@ class ServerChannel extends Channel {
     }
 
     @Override
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void destroy() {
         synchronized (lock) {
             super.destroy();
