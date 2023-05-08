@@ -16,7 +16,6 @@
 
 package com.ingreatsol.bluetoothcommunicator;
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -37,15 +36,13 @@ class BluetoothMessage implements Parcelable {
     public static final int TOTAL_LENGTH = ID_LENGTH + SEQUENCE_NUMBER_LENGTH + TYPE_LENGTH;
     public static final int NON_FINAL = 1;
     public static final int FINAL = 2;
-    private Context context;
     private Peer sender;  // if we are the sender, the sender can be null
     private SequenceNumber id;
     private SequenceNumber sequenceNumber;
     private int type;
     private byte[] data;
 
-    public BluetoothMessage(Context context, Peer sender, SequenceNumber id, SequenceNumber sequenceNumber, int type, byte[] data) {
-        this.context = context;
+    public BluetoothMessage(Peer sender, SequenceNumber id, SequenceNumber sequenceNumber, int type, byte[] data) {
         this.sender = sender;
         this.id = id;
         this.sequenceNumber = sequenceNumber;
@@ -53,8 +50,7 @@ class BluetoothMessage implements Parcelable {
         this.data = data;
     }
 
-    public BluetoothMessage(Context context, SequenceNumber id, SequenceNumber sequenceNumber, int type, byte[] data) {
-        this.context = context;
+    public BluetoothMessage(SequenceNumber id, SequenceNumber sequenceNumber, int type, byte[] data) {
         this.id = id;
         this.sequenceNumber = sequenceNumber;
         this.type = type;
@@ -62,15 +58,15 @@ class BluetoothMessage implements Parcelable {
     }
 
     @Nullable
-    public static BluetoothMessage createFromBytes(Context context, Peer sender, byte[] completeData) {
+    public static BluetoothMessage createFromBytes(Peer sender, byte[] completeData) {
         String completeText = new String(completeData, StandardCharsets.UTF_8);
         if (completeText.length() > TOTAL_LENGTH) {
-            SequenceNumber id = new SequenceNumber(context, completeText.substring(0, ID_LENGTH), ID_LENGTH);
-            SequenceNumber sequenceNumber = new SequenceNumber(context, completeText.substring(ID_LENGTH, ID_LENGTH + SEQUENCE_NUMBER_LENGTH), SEQUENCE_NUMBER_LENGTH);
+            SequenceNumber id = new SequenceNumber(completeText.substring(0, ID_LENGTH), ID_LENGTH);
+            SequenceNumber sequenceNumber = new SequenceNumber(completeText.substring(ID_LENGTH, ID_LENGTH + SEQUENCE_NUMBER_LENGTH), SEQUENCE_NUMBER_LENGTH);
             int type = Integer.parseInt(completeText.substring(ID_LENGTH + SEQUENCE_NUMBER_LENGTH, TOTAL_LENGTH));
             byte[] data = BluetoothTools.subBytes(completeData, TOTAL_LENGTH, completeData.length);   // the header is deleted
             if (data != null && sender != null) {
-                return new BluetoothMessage(context, sender, id, sequenceNumber, type, data);
+                return new BluetoothMessage(sender, id, sequenceNumber, type, data);
             }
         }
         return null;
@@ -140,7 +136,7 @@ class BluetoothMessage implements Parcelable {
             String header = completeText.substring(0, Message.HEADER_LENGTH);
             byte[] data = BluetoothTools.subBytes(getData(), header.getBytes(StandardCharsets.UTF_8).length, getData().length);
             if (data != null) {
-                return new Message(context, sender, header, data);
+                return new Message(sender, header, data);
             }
         }
         return null;
@@ -165,13 +161,11 @@ class BluetoothMessage implements Parcelable {
     }
 
     public static class SequenceNumber {
-        private final Context context;
         private final int size;
         private final ArrayList<Character> supportedUTFCharacters;
         private final Character[] value;
 
-        public SequenceNumber(Context context, int size) {
-            this.context = context;
+        public SequenceNumber(int size) {
             this.size = size;
             this.supportedUTFCharacters = BluetoothTools.getSupportedUTFCharacters();
             this.value = new Character[size];
@@ -183,12 +177,11 @@ class BluetoothMessage implements Parcelable {
         /**
          * @param value must contain 3 characters to avoid mistakes
          */
-        public SequenceNumber(Context context, String value, int size) {
-            this.context = context;
+        public SequenceNumber(String value, int size) {
             this.size = size;
             this.supportedUTFCharacters = BluetoothTools.getSupportedUTFCharacters();
             this.value = new Character[size];
-            String fixedValue = BluetoothTools.fixLength( value, size, BluetoothTools.FIX_NUMBER);
+            String fixedValue = BluetoothTools.fixLength(value, size, BluetoothTools.FIX_NUMBER);
             for (int i = 0; i < size; i++) {
                 this.value[i] = fixedValue.charAt(i);
             }
@@ -236,7 +229,7 @@ class BluetoothMessage implements Parcelable {
 
         @NonNull
         public SequenceNumber clone() {
-            return new SequenceNumber(context, getValue(), size);
+            return new SequenceNumber(getValue(), size);
         }
 
         public String getValue() {
@@ -267,8 +260,8 @@ class BluetoothMessage implements Parcelable {
 
     private BluetoothMessage(@NonNull Parcel in) {
         sender = in.readParcelable(Peer.class.getClassLoader());
-        id = new SequenceNumber(context, in.readString(), ID_LENGTH);
-        sequenceNumber = new SequenceNumber(context, in.readString(), SEQUENCE_NUMBER_LENGTH);
+        id = new SequenceNumber(in.readString(), ID_LENGTH);
+        sequenceNumber = new SequenceNumber(in.readString(), SEQUENCE_NUMBER_LENGTH);
         type = in.readInt();
         in.readByteArray(this.data);
     }

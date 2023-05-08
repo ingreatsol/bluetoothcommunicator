@@ -63,17 +63,19 @@ class BluetoothConnectionServer extends BluetoothConnection {
     private BluetoothGattServer bluetoothGattServer;
     private final BluetoothManager bluetoothManager;
     private final BluetoothConnectionClient client;
+    private final Context context;
 
-    public BluetoothConnectionServer(final Context context,
+    public BluetoothConnectionServer(@NonNull final Context context,
                                      final String name,
                                      @NonNull final BluetoothAdapter bluetoothAdapter,
                                      final int strategy,
                                      final BluetoothConnectionClient client,
                                      final Callback callback) {
-        super(context, name, bluetoothAdapter, strategy, callback);
+        super(name, bluetoothAdapter, strategy, callback);
 
         this.bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         this.client = client;
+        this.context = context;
     }
 
     public boolean isGattServerNotInitialized() {
@@ -307,7 +309,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
                 } else if (characteristic.getUuid().equals(MESSAGE_RECEIVE_UUID)) {
                     if (index != -1) {
                         Peer sender = (Peer) channels.get(index).getPeer().clone();
-                        BluetoothMessage subMessage = BluetoothMessage.createFromBytes(context, sender, value);
+                        BluetoothMessage subMessage = BluetoothMessage.createFromBytes(sender, value);
                         if (subMessage != null) {
                             if (!channels.get(index).getReceivedMessages().contains(subMessage)) {
                                 int messageIndex = channels.get(index).getReceivingMessages().indexOf(subMessage);
@@ -322,8 +324,10 @@ class BluetoothConnectionServer extends BluetoothConnection {
                                     Message message = bluetoothMessage.convertInMessage();
                                     channels.get(index).addReceivedMessage(bluetoothMessage);
                                     if (message != null) {
-                                        Log.e("clientMessageReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                         notifyMessageReceived(message);
+                                        assert message.getSender() != null;
+                                        assert message.getSender().getDevice() != null;
+                                        Log.e("clientMessageReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                     }
                                 }
                             }
@@ -332,11 +336,10 @@ class BluetoothConnectionServer extends BluetoothConnection {
                             bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, responseData);
                         }
                     }
-
                 } else if (characteristic.getUuid().equals(DATA_RECEIVE_UUID)) {
                     if (index != -1) {
                         Peer sender = (Peer) channels.get(index).getPeer().clone();
-                        BluetoothMessage subData = BluetoothMessage.createFromBytes(context, sender, value);
+                        BluetoothMessage subData = BluetoothMessage.createFromBytes(sender, value);
                         if (subData != null) {
                             if (!channels.get(index).getReceivedData().contains(subData)) {
                                 int dataIndex = channels.get(index).getReceivingData().indexOf(subData);
@@ -351,8 +354,10 @@ class BluetoothConnectionServer extends BluetoothConnection {
                                     Message message = bluetoothMessage.convertInMessage();
                                     channels.get(index).addReceivedData(bluetoothMessage);
                                     if (message != null) {
-                                        Log.e("clientDataReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                         notifyDataReceived(message);
+                                        assert message.getSender() != null;
+                                        assert message.getSender().getDevice() != null;
+                                        Log.e("clientDataReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                     }
                                 }
                             }
@@ -366,8 +371,8 @@ class BluetoothConnectionServer extends BluetoothConnection {
                     int totalLength = BluetoothMessage.ID_LENGTH + BluetoothMessage.SEQUENCE_NUMBER_LENGTH;
                     String completeText = new String(value, StandardCharsets.UTF_8);
                     if (completeText.length() >= totalLength) {
-                        BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(context, completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
-                        BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(context, completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
+                        BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
+                        BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
                         BluetoothMessage pendingSubMessage = channels.get(index).getPendingSubMessage();
                         // if pendingSubMessage is null or does not match it means that the message has already been confirmed, or has yet to be confirmed, but we do nothing because this is only a repetition of a previous confirmation
                         if (pendingSubMessage != null && id.equals(pendingSubMessage.getId()) && sequenceNumber.equals(pendingSubMessage.getSequenceNumber())) {
@@ -380,8 +385,8 @@ class BluetoothConnectionServer extends BluetoothConnection {
                     int totalLength = BluetoothMessage.ID_LENGTH + BluetoothMessage.SEQUENCE_NUMBER_LENGTH;
                     String completeText = new String(value, StandardCharsets.UTF_8);
                     if (completeText.length() >= totalLength) {
-                        BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(context, completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
-                        BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(context, completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
+                        BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
+                        BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
                         BluetoothMessage pendingSubData = channels.get(index).getPendingSubData();
                         // if pendingSubData is null or does not match it means that the message has already been confirmed, or has yet to be confirmed, but we do nothing because this is only a repetition of a previous confirmation
                         if (pendingSubData != null && id.equals(pendingSubData.getId()) && sequenceNumber.equals(pendingSubData.getSequenceNumber())) {
@@ -416,7 +421,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
                 synchronized (channelsLock) {
                     int index;
                     if (!client.getConnectedPeers().contains(peer) && !channels.contains(peer)) {   // the client object is used to manage synchronization with the client to avoid adding a device that connects to the latter instead of us
-                        channels.add(new ServerChannel(context, peer, bluetoothAdapter));
+                        channels.add(new ServerChannel(peer, bluetoothAdapter));
                         index = channels.size() - 1;
                         ((ServerChannel) channels.get(index)).setBluetoothGattServer(bluetoothGattServer);
                         channels.get(index).getPeer().setHardwareConnected(true);
@@ -455,11 +460,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
                 }
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                ArrayList<String> channelsNames = new ArrayList<>();
-                for (Channel channel : channels) {
-                    channelsNames.add(channel.getPeer().getDevice().getAddress() + " ");
-                }
-
                 synchronized (channelsLock) {
                     final int index = channels.indexOf(peer);
                     if (index != -1) {

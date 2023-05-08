@@ -162,7 +162,7 @@ public class ConversationFragment extends Fragment {
                 //sending message
                 if (editText.getText().length() > 0) {
                     //the sender will be inserted by the receiver device, so you don't need to enter it
-                    Message message = new Message(global, "m", editText.getText().toString(), global.getBluetoothCommunicator().getConnectedPeersList().get(0));
+                    Message message = new Message("m", editText.getText().toString(), global.getBluetoothCommunicator().getConnectedPeersList().get(0));
                     global.getBluetoothCommunicator().sendMessage(message);
                     editText.setText("");
                     //add the message to the message list

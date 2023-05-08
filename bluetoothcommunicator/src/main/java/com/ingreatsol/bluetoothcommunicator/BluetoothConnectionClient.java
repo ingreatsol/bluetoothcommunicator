@@ -22,7 +22,6 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
@@ -40,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 class BluetoothConnectionClient extends BluetoothConnection {
+    private final Context context;
     private final BluetoothGattCallback channelsCallback;
     private final ConnectionDeque pendingConnections = new ConnectionDeque();
 
@@ -47,7 +47,9 @@ class BluetoothConnectionClient extends BluetoothConnection {
                                      String uniqueName,
                                      @NonNull final BluetoothAdapter bluetoothAdapter,
                                      final int strategy, final Callback callback) {
-        super(context, uniqueName, bluetoothAdapter, strategy, callback);
+        super(uniqueName, bluetoothAdapter, strategy, callback);
+
+        this.context = context;
         channelsCallback = new BluetoothGattCallback() {
             @Override
             @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
@@ -120,8 +122,8 @@ class BluetoothConnectionClient extends BluetoothConnection {
                             int totalLength = BluetoothMessage.ID_LENGTH + BluetoothMessage.SEQUENCE_NUMBER_LENGTH;
                             String completeText = new String(characteristic.getValue(), StandardCharsets.UTF_8);
                             if (completeText.length() >= totalLength) {
-                                BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(context, completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
-                                BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(context, completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
+                                BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
+                                BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
                                 BluetoothMessage pendingSubMessage = channels.get(index).getPendingSubMessage();
                                 // if pendingSubMessage is null or does not match it means that the message has already been confirmed, or has yet to be confirmed,
                                 // but we do nothing because this is only a repetition of a previous confirmation
@@ -139,8 +141,8 @@ class BluetoothConnectionClient extends BluetoothConnection {
                             int totalLength = BluetoothMessage.ID_LENGTH + BluetoothMessage.SEQUENCE_NUMBER_LENGTH;
                             String completeText = new String(characteristic.getValue(), StandardCharsets.UTF_8);
                             if (completeText.length() >= totalLength) {
-                                BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(context, completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
-                                BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(context, completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
+                                BluetoothMessage.SequenceNumber id = new BluetoothMessage.SequenceNumber(completeText.substring(0, BluetoothMessage.ID_LENGTH), BluetoothMessage.ID_LENGTH);
+                                BluetoothMessage.SequenceNumber sequenceNumber = new BluetoothMessage.SequenceNumber(completeText.substring(BluetoothMessage.ID_LENGTH, totalLength), BluetoothMessage.SEQUENCE_NUMBER_LENGTH);
                                 BluetoothMessage pendingSubData = channels.get(index).getPendingSubData();
                                 // if pendingSubData is null or does not match it means that the message has already been confirmed, or has yet to be confirmed,
                                 // but we do nothing because this is only a repetition of a previous confirmation
@@ -175,7 +177,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
                         //here the characteristic has also a value
                         if (index != -1) {
                             Peer sender = (Peer) channels.get(index).getPeer().clone();
-                            BluetoothMessage subData = BluetoothMessage.createFromBytes(context, sender, characteristic.getValue());
+                            BluetoothMessage subData = BluetoothMessage.createFromBytes(sender, characteristic.getValue());
                             if (subData != null) {
                                 if (!channels.get(index).getReceivedData().contains(subData)) {
                                     int dataIndex = channels.get(index).getReceivingData().indexOf(subData);
@@ -190,8 +192,11 @@ class BluetoothConnectionClient extends BluetoothConnection {
                                         Message message = bluetoothMessage.convertInMessage();
                                         channels.get(index).addReceivedData(bluetoothMessage);
                                         if (message != null) {
-                                            Log.e("clientDataReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                             notifyDataReceived(message);
+
+                                            assert message.getSender() != null;
+                                            assert message.getSender().getDevice() != null;
+                                            Log.e("clientDataReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                         }
                                     }
                                 }
@@ -233,7 +238,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
                 if (characteristic.getUuid().equals(BluetoothConnectionServer.CONNECTION_RESPONSE_UUID)) {
                     if (index != -1) {
                         if (!channels.get(index).getPeer().isConnected() && !channels.get(index).getPeer().isReconnecting() && !channels.get(index).getPeer().isDisconnecting()) {
-                            int responseValue = Integer.valueOf(new String(characteristic.getValue(), StandardCharsets.UTF_8));
+                            int responseValue = Integer.parseInt(new String(characteristic.getValue(), StandardCharsets.UTF_8));
 
                             if (responseValue == BluetoothConnectionServer.ACCEPT) {
                                 notifyConnectionSuccess(channels.get(index));
@@ -276,7 +281,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
                     if (index != -1) {
                         channels.get(index).pausePendingMessage();
                         Peer sender = (Peer) channels.get(index).getPeer().clone();
-                        BluetoothMessage subMessage = BluetoothMessage.createFromBytes(context, sender, characteristic.getValue());
+                        BluetoothMessage subMessage = BluetoothMessage.createFromBytes(sender, characteristic.getValue());
                         if (subMessage != null) {
                             if (!channels.get(index).getReceivedMessages().contains(subMessage)) {
                                 int messageIndex = channels.get(index).getReceivingMessages().indexOf(subMessage);
@@ -291,8 +296,10 @@ class BluetoothConnectionClient extends BluetoothConnection {
                                     Message message = bluetoothMessage.convertInMessage();
                                     channels.get(index).addReceivedMessage(bluetoothMessage);
                                     if (message != null) {
-                                        Log.e("clientMessageReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                         notifyMessageReceived(message);
+                                        assert message.getSender() != null;
+                                        assert message.getSender().getDevice() != null;
+                                        Log.e("clientMessageReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                     }
                                 }
                             }
@@ -516,9 +523,12 @@ class BluetoothConnectionClient extends BluetoothConnection {
                 int index = indexOfChannel(peer.getUniqueName());
                 if (index == -1) {
                     // connection
-                    channels.add(new ClientChannel(context, peer));
+                    channels.add(new ClientChannel(peer));
                     index = channels.size() - 1;
-                    BluetoothGatt gatt = channels.get(index).getPeer().getRemoteDevice(bluetoothAdapter).connectGatt(context, false, channelsCallback, BluetoothDevice.TRANSPORT_LE);
+                    BluetoothGatt gatt = channels.get(index)
+                            .getPeer()
+                            .getRemoteDevice(bluetoothAdapter)
+                            .connectGatt(context, false, channelsCallback, BluetoothDevice.TRANSPORT_LE);
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
                     } else {
@@ -528,7 +538,10 @@ class BluetoothConnectionClient extends BluetoothConnection {
 
                 } else if (channels.get(index).getPeer().isReconnecting()) {
                     // reconnection
-                    BluetoothGatt gatt = channels.get(index).getPeer().getRemoteDevice(bluetoothAdapter).connectGatt(context, false, channelsCallback, BluetoothDevice.TRANSPORT_LE);
+                    BluetoothGatt gatt = channels.get(index)
+                            .getPeer()
+                            .getRemoteDevice(bluetoothAdapter)
+                            .connectGatt(context, false, channelsCallback, BluetoothDevice.TRANSPORT_LE);
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
                     } else {

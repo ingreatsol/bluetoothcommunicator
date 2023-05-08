@@ -17,7 +17,6 @@
 package com.ingreatsol.bluetoothcommunicator;
 
 import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -41,18 +40,16 @@ abstract class BluetoothConnection {
     protected BluetoothAdapter bluetoothAdapter;
     protected Callback callback;
     protected int strategy;
-    protected Context context;
+
     protected Handler mainHandler;
     protected ArrayList<Channel> channels = new ArrayList<>();
     protected Channel.DisconnectionCallback disconnectionCallback;
 
 
-    protected BluetoothConnection(final Context context,
-                                  String uniqueName,
+    protected BluetoothConnection(String uniqueName,
                                   BluetoothAdapter bluetoothAdapter,
                                   int strategy,
                                   Callback callback) {
-        this.context = context;
         this.strategy = strategy;
         this.callback = callback;
         this.uniqueName = uniqueName;

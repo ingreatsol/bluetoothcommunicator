@@ -19,7 +19,6 @@ package com.ingreatsol.bluetoothcommunicator;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
-import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
@@ -33,11 +32,9 @@ import java.nio.charset.StandardCharsets;
 class ClientChannel extends Channel {
     private BluetoothGatt bluetoothGatt;
 
-
-    public ClientChannel(Context context, @NonNull Peer peer) {
-        super(context, peer);
+    public ClientChannel(@NonNull Peer peer) {
+        super(peer);
     }
-
 
     public void setBluetoothGatt(BluetoothGatt bluetoothGatt) {
         synchronized (lock) {

@@ -16,7 +16,6 @@
 
 package com.ingreatsol.bluetoothcommunicator;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -38,7 +37,6 @@ abstract class Channel {
     protected final int NOTIFY_DISCONNECTION_TIMEOUT = 5000;
     protected final int DISCONNECTION_TIMEOUT = 4000;
     //variables and objects
-    protected Context context;
     @NonNull
     private Peer peer;
     private final BluetoothMessage.SequenceNumber messageID;
@@ -70,16 +68,14 @@ abstract class Channel {
     protected boolean dataPaused = false;
     protected final Object lock = new Object();
 
-    protected Channel(Context context, @NonNull Peer peer) {
-        this.context = context;
-        this.messageID= new BluetoothMessage.SequenceNumber(context,BluetoothMessage.ID_LENGTH);
-        this.dataID= new BluetoothMessage.SequenceNumber(context,BluetoothMessage.ID_LENGTH);
+    protected Channel(@NonNull Peer peer) {
+        this.messageID = new BluetoothMessage.SequenceNumber(BluetoothMessage.ID_LENGTH);
+        this.dataID = new BluetoothMessage.SequenceNumber(BluetoothMessage.ID_LENGTH);
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.messageHandler = new Handler(Looper.getMainLooper());
         this.dataHandler = new Handler(Looper.getMainLooper());
         this.peer = peer;
     }
-
 
     public void writeMessage(Message message, MessageCallback callback) {
         synchronized (lock) {
@@ -255,17 +251,17 @@ abstract class Channel {
     }
 
     public void addReceivedMessage(@NonNull BluetoothMessage message) {
-        if(message.getId().isMax()){
+        if (message.getId().isMax()) {
             receivedMessages.clear();
-        }else{
+        } else {
             receivedMessages.add(message);
         }
     }
 
-    public void addReceivedData(BluetoothMessage data) {
-        if(data.getId().isMax()){
+    public void addReceivedData(@NonNull BluetoothMessage data) {
+        if (data.getId().isMax()) {
             receivedData.clear();
-        }else{
+        } else {
             receivedData.add(data);
         }
     }

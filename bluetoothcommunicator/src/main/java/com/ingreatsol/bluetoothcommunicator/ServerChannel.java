@@ -37,8 +37,8 @@ class ServerChannel extends Channel {
     private final BluetoothAdapter bluetoothAdapter;
     private UUID sendingCharacteristic = null;
 
-    protected ServerChannel(Context context, @NonNull Peer peer, final BluetoothAdapter bluetoothAdapter) {
-        super(context, peer);
+    protected ServerChannel(@NonNull Peer peer, final BluetoothAdapter bluetoothAdapter) {
+        super(peer);
         this.bluetoothAdapter = bluetoothAdapter;
     }
 
@@ -49,95 +49,95 @@ class ServerChannel extends Channel {
 
     @Override
     protected void writeSubMessage() {
-            new Thread() {
-                @Override
-                @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-                public void run() {
-                    synchronized (lock) {
-                        super.run();
-                        boolean success = false;
-                        if (bluetoothGattServer != null && !messagesPaused && getPeer().isFullyConnected()) {
-                            BluetoothGattService service = bluetoothGattServer.getService(BluetoothConnection.APP_UUID);
+        new Thread() {
+            @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+            public void run() {
+                synchronized (lock) {
+                    super.run();
+                    boolean success = false;
+                    if (bluetoothGattServer != null && !messagesPaused && getPeer().isFullyConnected()) {
+                        BluetoothGattService service = bluetoothGattServer.getService(BluetoothConnection.APP_UUID);
 
-                            if (service != null) {
-                                if (pendingMessage != null) {
-                                    BluetoothMessage subMessageToSend = pendingMessage.peekFirst();
-                                    if (subMessageToSend != null) {    // if there are other subMessages for the message we are sending, we send the next one
-                                        BluetoothGattCharacteristic output = service.getCharacteristic(BluetoothConnectionServer.MESSAGE_SEND_UUID);
-                                        if (output != null) {
-                                            output.setValue(subMessageToSend.getCompleteData());
-                                            sendingCharacteristic = BluetoothConnectionServer.MESSAGE_SEND_UUID;
-                                            success = bluetoothGattServer.notifyCharacteristicChanged(getPeer().getRemoteDevice(bluetoothAdapter), output, true);
-                                            Log.e("subServerMessage send", "-" + success);
-                                        }
+                        if (service != null) {
+                            if (pendingMessage != null) {
+                                BluetoothMessage subMessageToSend = pendingMessage.peekFirst();
+                                if (subMessageToSend != null) {    // if there are other subMessages for the message we are sending, we send the next one
+                                    BluetoothGattCharacteristic output = service.getCharacteristic(BluetoothConnectionServer.MESSAGE_SEND_UUID);
+                                    if (output != null) {
+                                        output.setValue(subMessageToSend.getCompleteData());
+                                        sendingCharacteristic = BluetoothConnectionServer.MESSAGE_SEND_UUID;
+                                        success = bluetoothGattServer.notifyCharacteristicChanged(getPeer().getRemoteDevice(bluetoothAdapter), output, true);
+                                        Log.e("subServerMessage send", "-" + success);
                                     }
-                                } else {
-                                    success = true;
                                 }
+                            } else {
+                                success = true;
                             }
                         }
-                        final boolean finalSuccess = success;
-                        if (finalSuccess) {
-                            // start of message timer
-                            startMessageTimer(new Timer.Callback() {
-                                @Override
-                                public void onFinished() {
-                                    onSubMessageWriteFailed();
-                                }
-                            });
-                        } else {
-                            writeSubMessage();
-                        }
+                    }
+                    final boolean finalSuccess = success;
+                    if (finalSuccess) {
+                        // start of message timer
+                        startMessageTimer(new Timer.Callback() {
+                            @Override
+                            public void onFinished() {
+                                onSubMessageWriteFailed();
+                            }
+                        });
+                    } else {
+                        writeSubMessage();
                     }
                 }
-            }.start();
+            }
+        }.start();
     }
 
     @Override
     protected void writeSubData() {
-            new Thread() {
-                @Override
-                @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-                public void run() {
-                    synchronized (lock) {
-                        super.run();
-                        boolean success = false;
-                        if (bluetoothGattServer != null && !dataPaused && getPeer().isFullyConnected()) {
-                            BluetoothGattService service = bluetoothGattServer.getService(BluetoothConnection.APP_UUID);
+        new Thread() {
+            @Override
+            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+            public void run() {
+                synchronized (lock) {
+                    super.run();
+                    boolean success = false;
+                    if (bluetoothGattServer != null && !dataPaused && getPeer().isFullyConnected()) {
+                        BluetoothGattService service = bluetoothGattServer.getService(BluetoothConnection.APP_UUID);
 
-                            if (service != null) {
-                                if (pendingData != null) {
-                                    BluetoothMessage subDataToSend = pendingData.peekFirst();
-                                    if (subDataToSend != null) {   // if there are other subMessages for the message we are sending, we send the next one
-                                        BluetoothGattCharacteristic output = service.getCharacteristic(BluetoothConnectionServer.DATA_SEND_UUID);
-                                        if (output != null) {
-                                            //output.setValue(subDataToSend);
-                                            output.setValue(String.valueOf(1).getBytes(StandardCharsets.UTF_8));
-                                            sendingCharacteristic = BluetoothConnectionServer.DATA_SEND_UUID;
-                                            success = bluetoothGattServer.notifyCharacteristicChanged(getPeer().getRemoteDevice(bluetoothAdapter), output, true);
-                                            Log.e("subServerData send", "-" + success);
-                                        }
+                        if (service != null) {
+                            if (pendingData != null) {
+                                BluetoothMessage subDataToSend = pendingData.peekFirst();
+                                if (subDataToSend != null) {   // if there are other subMessages for the message we are sending, we send the next one
+                                    BluetoothGattCharacteristic output = service.getCharacteristic(BluetoothConnectionServer.DATA_SEND_UUID);
+                                    if (output != null) {
+                                        //output.setValue(subDataToSend);
+                                        output.setValue(String.valueOf(1).getBytes(StandardCharsets.UTF_8));
+                                        sendingCharacteristic = BluetoothConnectionServer.DATA_SEND_UUID;
+                                        success = bluetoothGattServer.notifyCharacteristicChanged(getPeer().getRemoteDevice(bluetoothAdapter), output, true);
+                                        Log.e("subServerData send", "-" + success);
                                     }
-                                } else {
-                                    success = true;
                                 }
+                            } else {
+                                success = true;
                             }
                         }
-                        final boolean finalSuccess = success;
-                        if (finalSuccess) {
-                            // start of data timer
-                            startDataTimer(new Timer.Callback() {
-                                @Override
-                                public void onFinished() {
-                                    onSubDataWriteFailed();
-                                }
-                            });
-                        } else {
-                            writeSubData();
-                        }
+                    }
+                    final boolean finalSuccess = success;
+                    if (finalSuccess) {
+                        // start of data timer
+                        startDataTimer(new Timer.Callback() {
+                            @Override
+                            public void onFinished() {
+                                onSubDataWriteFailed();
+                            }
+                        });
+                    } else {
+                        writeSubData();
                     }
                 }
-            }.start();
+            }
+        }.start();
     }
 
     public UUID getSendingCharacteristic() {
