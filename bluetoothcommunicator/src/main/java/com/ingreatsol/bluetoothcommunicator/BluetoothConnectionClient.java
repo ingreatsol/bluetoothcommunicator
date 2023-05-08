@@ -53,7 +53,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
             @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
             public void onConnectionStateChange(final BluetoothGatt gatt, int status, final int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
-                onChangeConnectionState(gatt, status, newState);
+                onChangeConnectionState(gatt, newState);
             }
 
             @Override
@@ -94,9 +94,8 @@ class BluetoothConnectionClient extends BluetoothConnection {
     }
 
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-    private void onChangeConnectionState(final BluetoothGatt gatt, int status, final int newState) {
+    private void onChangeConnectionState(final BluetoothGatt gatt, final int newState) {
         mainHandler.post(() -> {
-            final BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 onConnected(gatt);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -241,7 +240,6 @@ class BluetoothConnectionClient extends BluetoothConnection {
 
                             } else if (responseValue == BluetoothConnectionServer.REJECT) {
                                 notifyConnectionRejected(channels.get(index));
-
                             }
                         }
                     }

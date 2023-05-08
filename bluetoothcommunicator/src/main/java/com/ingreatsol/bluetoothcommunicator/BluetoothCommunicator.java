@@ -41,7 +41,6 @@ import com.ingreatsol.bluetoothcommunicator.tools.BluetoothTools;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This class allows you to communicate in P2P mode between two or more android devices.
@@ -255,7 +254,6 @@ public class BluetoothCommunicator {
     // variables
     private boolean advertising = false;
     private boolean discovering = false;
-    private boolean turningOnBluetooth = false;
     private boolean destroying = false;
     private final int strategy;
     private String uniqueName;
@@ -302,6 +300,7 @@ public class BluetoothCommunicator {
             public void onStartFailure(int errorCode) {
                 super.onStartFailure(errorCode);
             }
+
         };
         discoveryCallback = new ScanCallback() {
             @SuppressLint("MissingPermission")
@@ -348,6 +347,10 @@ public class BluetoothCommunicator {
             if (bluetoothAdapter.isEnabled()) {
                 initializeConnection();
             }
+        }
+
+        if (isBluetoothLeSupported() != SUCCESS){
+            notifyBluetoothLeNotSupported();
         }
     }
 
@@ -486,14 +489,9 @@ public class BluetoothCommunicator {
                 @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
                 public void onDisconnectionFailed() {
                     super.onDisconnectionFailed();
-                    //restart of bluetooth
-                    synchronized (bluetoothLock) {
-                        if (!turningOnBluetooth) {
-                            turningOnBluetooth = true;
-                            bluetoothAdapter.enable();
-                        }
-                    }
+                    notifyDisconnectionFailed();
                 }
+
             };
             // we create a client that will take care of sending any connection requests and managing those connections
             connectionClient = new BluetoothConnectionClient(context, uniqueName, bluetoothAdapter, strategy, connectionCallback);
@@ -543,7 +541,7 @@ public class BluetoothCommunicator {
             }
 
             //start advertising
-            int ret;
+            int ret = ERROR;
             if (bluetoothAdapter.isEnabled()) {
                 if (connectionServer.getReconnectingPeers().size() == 0) {
                     ret = executeStartAdvertising();
@@ -552,9 +550,7 @@ public class BluetoothCommunicator {
                 }
             } else {
                 //turn on bluetooth
-                turningOnBluetooth = true;
                 bluetoothAdapter.enable();
-                ret = SUCCESS;
             }
             if (ret == SUCCESS) {
                 advertising = true;
@@ -591,7 +587,7 @@ public class BluetoothCommunicator {
                 .setIncludeDeviceName(true)
                 .build();
 
-        BluetoothLeAdvertiser advertiser = Objects.requireNonNull(bluetoothAdapter).getBluetoothLeAdvertiser();
+        BluetoothLeAdvertiser advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
         if (advertiser != null) {
             advertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback);
             return SUCCESS;
@@ -724,7 +720,7 @@ public class BluetoothCommunicator {
                 return ALREADY_STARTED;
             }
             //start advertising
-            int ret;
+            int ret = ERROR;
             if (bluetoothAdapter.isEnabled()) {
                 if (connectionClient.getReconnectingPeers().size() == 0) {
                     ret = executeStartDiscovery();
@@ -733,9 +729,7 @@ public class BluetoothCommunicator {
                 }
             } else {
                 //turn on bluetooth
-                turningOnBluetooth = true;
                 bluetoothAdapter.enable();
-                ret = SUCCESS;
             }
             if (ret == SUCCESS) {
                 discovering = true;
@@ -1278,6 +1272,14 @@ public class BluetoothCommunicator {
         mainHandler.post(() -> {
             for (int i = 0; i < clientCallbacks.size(); i++) {
                 clientCallbacks.get(i).onDisconnected(peer, peersLeft);
+            }
+        });
+    }
+
+    private void notifyDisconnectionFailed() {
+        mainHandler.post(() -> {
+            for (int i = 0; i < clientCallbacks.size(); i++) {
+                clientCallbacks.get(i).onDisconnectionFailed();
             }
         });
     }
