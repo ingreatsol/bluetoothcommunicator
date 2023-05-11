@@ -36,7 +36,6 @@ import com.ingreatsol.bluetoothcommunicator.tools.BluetoothTools;
 import com.ingreatsol.bluetoothcommunicator.tools.Timer;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.UUID;
 
 

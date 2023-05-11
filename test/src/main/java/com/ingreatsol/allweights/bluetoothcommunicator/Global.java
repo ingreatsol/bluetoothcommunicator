@@ -45,6 +45,8 @@ public class Global extends Application {
             name = "User " + new Random().nextInt(21);
         }
 
+        name = name + " prueba";
+
         bluetoothCommunicator = new BluetoothCommunicator(this, name, BluetoothCommunicator.STRATEGY_P2P_WITH_RECONNECTION);
     }
 

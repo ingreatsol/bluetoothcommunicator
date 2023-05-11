@@ -357,7 +357,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     }
 
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-    private void onDisconnected(final BluetoothGatt gatt) {
+    private void onDisconnected(@NonNull final BluetoothGatt gatt) {
         synchronized (channelsLock) {
             gatt.close();
             int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));

@@ -29,6 +29,8 @@ import java.util.Random;
 public class BluetoothTools {
     public static final int FIX_NUMBER = 0;
     public static final int FIX_TEXT = 1;
+    public static final String BLUETOOTH_NAME_ID = "bluetoothNameId";
+    public static final String ORIGINAL_BLUETOOTH_NAME = "originalbluetoothName";
 
     /**
      * return all characters of UTF encoding (this is because bluetooth only support a certain amount of bytes
@@ -97,27 +99,49 @@ public class BluetoothTools {
         return new RandomString(length).nextString();
     }
 
-    @NonNull
-    public static String generateBluetoothNameId(Context context) {
+    @SuppressWarnings("deprecation")
+    public static SharedPreferences getDefaultSharedPreferences(Context context) {
         SharedPreferences sharedPreferences;
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             String sharedPreferencename = PreferenceManager.getDefaultSharedPreferencesName(context);
             sharedPreferences = context.getSharedPreferences(sharedPreferencename, Context.MODE_PRIVATE);
-        }
-        else {
+        } else {
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         }
 
-        String id = sharedPreferences.getString("bluetoothNameId", "");
+        return sharedPreferences;
+    }
+
+    @NonNull
+    public static String generateBluetoothNameId(Context context) {
+        SharedPreferences sharedPreferences = getDefaultSharedPreferences(context);
+
+        String id = sharedPreferences.getString(BLUETOOTH_NAME_ID, "");
         if (Objects.isNull(id) || id.length() != 2) {
-            //generazione dell'id e salvataggio
+            //generación y almacenamiento de ID
             SharedPreferences.Editor edit = sharedPreferences.edit();
             id = generateRandomUTFString(2);
-            edit.putString("bluetoothNameId", id);
+            edit.putString(BLUETOOTH_NAME_ID, id);
             edit.apply();
         }
         return id;
+    }
+
+    public static String getOriginalBluetoothName(Context context) {
+        SharedPreferences sharedPreferences = getDefaultSharedPreferences(context);
+
+        return sharedPreferences.getString(ORIGINAL_BLUETOOTH_NAME, "");
+    }
+
+    @NonNull
+    public static Boolean setOriginalBluetoothName(Context context, String originalName) {
+        SharedPreferences sharedPreferences = getDefaultSharedPreferences(context);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+
+        edit.putString(ORIGINAL_BLUETOOTH_NAME, originalName);
+
+        return edit.commit();
     }
 
     /**

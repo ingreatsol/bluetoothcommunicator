@@ -257,7 +257,6 @@ public class BluetoothCommunicator {
     private boolean destroying = false;
     private final int strategy;
     private String uniqueName;
-    private String originalName;
     private ArrayDeque<Message> pendingMessages = new ArrayDeque<>();
     private ArrayDeque<Message> pendingData = new ArrayDeque<>();
     // objects
@@ -349,7 +348,7 @@ public class BluetoothCommunicator {
             }
         }
 
-        if (isBluetoothLeSupported() != SUCCESS){
+        if (isBluetoothLeSupported() != SUCCESS) {
             notifyBluetoothLeNotSupported();
         }
     }
@@ -516,11 +515,11 @@ public class BluetoothCommunicator {
     })
     public int startAdvertising() {
         synchronized (bluetoothLock) {
-            if (connectionServer == null){
+            if (connectionServer == null) {
                 initializeConnection();
             }
 
-            if (connectionServer.isGattServerNotInitialized()){
+            if (connectionServer.isGattServerNotInitialized()) {
                 connectionServer.initilizeGatServer();
             }
 
@@ -571,10 +570,22 @@ public class BluetoothCommunicator {
             return advertisementSupportedCode;
         }
 
+        if (bluetoothAdapter == null) {
+            return BLUETOOTH_LE_NOT_SUPPORTED;
+        }
+
         //name update
-        assert bluetoothAdapter != null;
-        originalName = bluetoothAdapter.getName();
-        bluetoothAdapter.setName(uniqueName);
+        String originalName = bluetoothAdapter.getName();
+        String originalNameSaved = BluetoothTools.getOriginalBluetoothName(context);
+
+        if (originalNameSaved.isEmpty() || (!originalName.equals(originalNameSaved) && !originalName.equals(uniqueName))) {
+            BluetoothTools.setOriginalBluetoothName(context, originalName);
+        }
+
+        if (!originalName.equals(uniqueName)){
+            bluetoothAdapter.setName(uniqueName);
+        }
+
         //start advertizing
         AdvertiseSettings advertiseSettings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)  //alto
@@ -607,7 +618,7 @@ public class BluetoothCommunicator {
     @SuppressLint("MissingPermission")
     public int stopAdvertising() {
         synchronized (bluetoothLock) {
-            if (connectionServer == null){
+            if (connectionServer == null) {
                 initializeConnection();
             }
 
@@ -623,7 +634,7 @@ public class BluetoothCommunicator {
                 return ALREADY_STOPPED;
             }
 
-            if (connectionServer.isGattServerNotInitialized()){
+            if (connectionServer.isGattServerNotInitialized()) {
                 connectionServer.initilizeGatServer();
             }
 
@@ -653,12 +664,12 @@ public class BluetoothCommunicator {
             return advertisementSupportedCode;
         }
 
-        //name restore
-        assert bluetoothAdapter != null;
-
-        if (originalName != null) {
-            bluetoothAdapter.setName(originalName);
+        if (bluetoothAdapter == null) {
+            return BLUETOOTH_LE_NOT_SUPPORTED;
         }
+
+        //name restore
+        bluetoothAdapter.setName(BluetoothTools.getOriginalBluetoothName(context));
 
         BluetoothLeAdvertiser advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
 
@@ -704,7 +715,7 @@ public class BluetoothCommunicator {
                 return DESTROYING;
             }
 
-            if (connectionClient == null){
+            if (connectionClient == null) {
                 initializeConnection();
             }
 
@@ -781,7 +792,7 @@ public class BluetoothCommunicator {
                 return BLUETOOTH_LE_NOT_SUPPORTED;
             }
 
-            if (connectionClient == null){
+            if (connectionClient == null) {
                 initializeConnection();
             }
 
@@ -902,7 +913,7 @@ public class BluetoothCommunicator {
 
     /**
      * this method set the name with which you would be seen by other devices, the name must be limited to 18 characters
-     * and can be only characters listed in BluetoothTools.getSupportedUTFCharacters(context) because the number of bytes for advertising beacon is limited,
+     * and can be only characters listed in BluetoothTools.getSupportedUTFCharacters() because the number of bytes for advertising beacon is limited,
      * there is no controls for this so if you not follow these restrictions BluetoothCommunicator will not work correctly.
      * <br /><br />
      * To the name will be added 4 random symbols in a completely transparent way (this 4 symbols will exixts only inside BluetoothCommunicator, which removes them before the name gets on the outside),
@@ -965,11 +976,11 @@ public class BluetoothCommunicator {
             return BLUETOOTH_LE_NOT_SUPPORTED;
         }
 
-        if (connectionServer == null){
+        if (connectionServer == null) {
             initializeConnection();
         }
 
-        if (connectionServer.isGattServerNotInitialized()){
+        if (connectionServer.isGattServerNotInitialized()) {
             connectionServer.initilizeGatServer();
         }
 
@@ -990,11 +1001,11 @@ public class BluetoothCommunicator {
             return BLUETOOTH_LE_NOT_SUPPORTED;
         }
 
-        if (connectionServer == null){
+        if (connectionServer == null) {
             initializeConnection();
         }
 
-        if (connectionServer.isGattServerNotInitialized()){
+        if (connectionServer.isGattServerNotInitialized()) {
             connectionServer.initilizeGatServer();
         }
 
@@ -1039,11 +1050,11 @@ public class BluetoothCommunicator {
             return BLUETOOTH_LE_NOT_SUPPORTED;
         }
 
-        if (connectionServer == null || connectionClient == null){
+        if (connectionServer == null || connectionClient == null) {
             initializeConnection();
         }
 
-        if (connectionServer.isGattServerNotInitialized()){
+        if (connectionServer.isGattServerNotInitialized()) {
             connectionServer.initilizeGatServer();
         }
 
@@ -1133,7 +1144,6 @@ public class BluetoothCommunicator {
     /**
      * This method must be called when you not use anymore BluetoothCommunicator for release resources, in the case you had saved BluetoothCommunicator in Global and/or
      * you will use BluetoothCommunicator for the entire life of application you can avoid the call to this method
-     *
      */
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void destroy() {
