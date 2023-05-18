@@ -329,7 +329,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
                                     if (message != null) {
                                         notifyMessageReceived(message);
                                         assert message.getSender() != null;
-                                        assert message.getSender().getDevice() != null;
                                         Log.e("clientMessageReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                     }
                                 }
@@ -359,7 +358,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
                                     if (message != null) {
                                         notifyDataReceived(message);
                                         assert message.getSender() != null;
-                                        assert message.getSender().getDevice() != null;
                                         Log.e("clientDataReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                     }
                                 }

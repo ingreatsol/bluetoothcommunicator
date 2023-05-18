@@ -197,7 +197,6 @@ class BluetoothConnectionClient extends BluetoothConnection {
                                             notifyDataReceived(message);
 
                                             assert message.getSender() != null;
-                                            assert message.getSender().getDevice() != null;
                                             Log.e("clientDataReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                         }
                                     }
@@ -301,7 +300,6 @@ class BluetoothConnectionClient extends BluetoothConnection {
                                     if (message != null) {
                                         notifyMessageReceived(message);
                                         assert message.getSender() != null;
-                                        assert message.getSender().getDevice() != null;
                                         Log.e("clientMessageReceive", message.getText() + "-" + message.getSender().getDevice().getAddress());
                                     }
                                 }
@@ -533,18 +531,16 @@ class BluetoothConnectionClient extends BluetoothConnection {
                     channels.add(new ClientChannel(peer));
                     index = channels.size() - 1;
 
-                    BluetoothGatt gatt = null;
+                    BluetoothGatt gatt;
 
                     BluetoothDevice device = channels.get(index)
                             .getPeer()
                             .getRemoteDevice(bluetoothAdapter);
 
-                    if (device != null) {
-                        gatt = device.connectGatt(context,
-                                false,
-                                channelsCallback,
-                                BluetoothDevice.TRANSPORT_LE);
-                    }
+                    gatt = device.connectGatt(context,
+                            false,
+                            channelsCallback,
+                            BluetoothDevice.TRANSPORT_LE);
 
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
@@ -555,18 +551,16 @@ class BluetoothConnectionClient extends BluetoothConnection {
 
                 } else if (channels.get(index).getPeer().isReconnecting()) {
                     // reconnection
-                    BluetoothGatt gatt = null;
+                    BluetoothGatt gatt;
 
                     BluetoothDevice device = channels.get(index)
                             .getPeer()
                             .getRemoteDevice(bluetoothAdapter);
 
-                    if (device != null) {
-                        gatt = device.connectGatt(context,
-                                false,
-                                channelsCallback,
-                                BluetoothDevice.TRANSPORT_LE);
-                    }
+                    gatt = device.connectGatt(context,
+                            false,
+                            channelsCallback,
+                            BluetoothDevice.TRANSPORT_LE);
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
                     } else {

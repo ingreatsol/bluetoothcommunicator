@@ -18,8 +18,6 @@ package com.ingreatsol.bluetoothcommunicator;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -47,15 +45,13 @@ public class Peer implements Parcelable, Cloneable {
     private String uniqueName;
     @NonNull
     private String name;
-    @Nullable
+    @NonNull
     private BluetoothDevice device;
     private boolean isHardwareConnected = false;
     private boolean isConnected;
     private boolean isReconnecting = false;
     private boolean isRequestingReconnection = false;
     private boolean isDisconnecting = false;
-    //private ArrayList<Callback> clientCallbacks = new ArrayList<>();
-    private Handler mainHandler;
 
     /**
      * This constructor is used internally by BluetoothCommunicator, you shouldn't create a Peer but instead use the peers founded by
@@ -65,8 +61,7 @@ public class Peer implements Parcelable, Cloneable {
      * @param uniqueName  uniqueName
      * @param isConnected isConnected
      */
-    public Peer(@Nullable BluetoothDevice device, @Nullable String uniqueName, boolean isConnected) {
-        mainHandler = new Handler(Looper.getMainLooper());
+    public Peer(@NonNull BluetoothDevice device, @Nullable String uniqueName, boolean isConnected) {
         this.device = device;
         if (uniqueName == null || uniqueName.length() < 2) {
             this.uniqueName = "";
@@ -92,8 +87,6 @@ public class Peer implements Parcelable, Cloneable {
         isReconnecting = peer.isReconnecting;
         isRequestingReconnection = peer.isRequestingReconnection;
         isDisconnecting = peer.isDisconnecting;
-        //clientCallbacks = peer.clientCallbacks;
-        mainHandler = peer.mainHandler;
     }
 
     /**
@@ -108,10 +101,9 @@ public class Peer implements Parcelable, Cloneable {
     public boolean equals(Object obj) {
         if (obj instanceof Peer) {
             Peer peer = (Peer) obj;
-            if (device != null && peer.getDevice() != null) {   // check that prioritizing the name is not a problem
-                if (device.getAddress() != null && peer.getDevice().getAddress() != null) {
-                    return device.getAddress().equals(peer.getDevice().getAddress());
-                }
+            // check that prioritizing the name is not a problem
+            if (device.getAddress() != null && peer.getDevice().getAddress() != null) {
+                return device.getAddress().equals(peer.getDevice().getAddress());
             }
         }
 
@@ -128,7 +120,7 @@ public class Peer implements Parcelable, Cloneable {
      *
      * @return bluetooth device
      */
-    @Nullable
+    @NonNull
     public BluetoothDevice getDevice() {
         return device;
     }
@@ -140,12 +132,9 @@ public class Peer implements Parcelable, Cloneable {
      * @param bluetoothAdapter adapter
      * @return remote device
      */
-    @Nullable
+    @NonNull
     public BluetoothDevice getRemoteDevice(@NonNull BluetoothAdapter bluetoothAdapter) {
-        if (device != null) {
-            return bluetoothAdapter.getRemoteDevice(device.getAddress());
-        }
-        return null;
+        return bluetoothAdapter.getRemoteDevice(device.getAddress());
     }
 
     /**
@@ -178,7 +167,7 @@ public class Peer implements Parcelable, Cloneable {
      *
      * @param device current device
      */
-    public void setDevice(@Nullable BluetoothDevice device) {
+    public void setDevice(@NonNull BluetoothDevice device) {
         this.device = device;
     }
 
@@ -315,11 +304,9 @@ public class Peer implements Parcelable, Cloneable {
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean isBonded(@NonNull BluetoothAdapter bluetoothAdapter) {
         ArrayList<BluetoothDevice> bondedDevices = new ArrayList<>(bluetoothAdapter.getBondedDevices());
-        if (device != null) {
-            for (int i = 0; i < bondedDevices.size(); i++) {
-                if (bluetoothAdapter.getRemoteDevice(bondedDevices.get(i).getAddress()).getAddress().equals(device.getAddress())) {
-                    return true;
-                }
+        for (int i = 0; i < bondedDevices.size(); i++) {
+            if (bluetoothAdapter.getRemoteDevice(bondedDevices.get(i).getAddress()).getAddress().equals(device.getAddress())) {
+                return true;
             }
         }
         return false;
