@@ -56,6 +56,7 @@ abstract class BluetoothConnection {
         this.bluetoothAdapter = bluetoothAdapter;
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.disconnectionCallback = new Channel.DisconnectionCallback() {
+            @SuppressWarnings("SuspiciousMethodCalls")
             @Override
             public void onAlreadyDisconnected(Peer peer) {
                 int index = channels.indexOf(peer);
@@ -160,46 +161,44 @@ abstract class BluetoothConnection {
         disconnect(peer, null);
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     public void disconnect(final Peer peer, @Nullable final Channel.DisconnectionNotificationCallback disconnectionNotificationCallback) {
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (channelsLock) {
-                    int index = channels.indexOf(peer);
-                    if (index != -1) {
-                        if (channels.get(index).getPeer().isReconnecting()) {
-                            // canceling of reconnection
-                            stopReconnection(channels.get(index));
-                            if (disconnectionNotificationCallback != null) {
-                                disconnectionNotificationCallback.onDisconnectionNotificationSent();
-                            }
-
-                        } else {
-                            //disconnection
-                            if (!channels.get(index).notifyDisconnection(new Channel.DisconnectionNotificationCallback() {
-                                @Override
-                                public void onDisconnectionNotificationSent() {
-                                    if (disconnectionNotificationCallback != null) {
-                                        disconnectionNotificationCallback.onDisconnectionNotificationSent();
-                                    }
-                                }
-
-                                @Override
-                                public void onDisconnectionFailed() {
-                                    if (disconnectionNotificationCallback != null) {
-                                        disconnectionNotificationCallback.onDisconnectionNotificationSent();
-                                    }
-                                    notifyDisconnectionFailed();
-                                }
-                            })) {
-                                channels.get(index).disconnect(disconnectionCallback);  // onDisconnectionNotificationSent is still called by disconnect();
-                            }
-
-                        }
-                    } else {
+        mainHandler.post(() -> {
+            synchronized (channelsLock) {
+                int index = channels.indexOf(peer);
+                if (index != -1) {
+                    if (channels.get(index).getPeer().isReconnecting()) {
+                        // canceling of reconnection
+                        stopReconnection(channels.get(index));
                         if (disconnectionNotificationCallback != null) {
                             disconnectionNotificationCallback.onDisconnectionNotificationSent();
                         }
+
+                    } else {
+                        //disconnection
+                        if (!channels.get(index).notifyDisconnection(new Channel.DisconnectionNotificationCallback() {
+                            @Override
+                            public void onDisconnectionNotificationSent() {
+                                if (disconnectionNotificationCallback != null) {
+                                    disconnectionNotificationCallback.onDisconnectionNotificationSent();
+                                }
+                            }
+
+                            @Override
+                            public void onDisconnectionFailed() {
+                                if (disconnectionNotificationCallback != null) {
+                                    disconnectionNotificationCallback.onDisconnectionNotificationSent();
+                                }
+                                notifyDisconnectionFailed();
+                            }
+                        })) {
+                            channels.get(index).disconnect(disconnectionCallback);  // onDisconnectionNotificationSent is still called by disconnect();
+                        }
+
+                    }
+                } else {
+                    if (disconnectionNotificationCallback != null) {
+                        disconnectionNotificationCallback.onDisconnectionNotificationSent();
                     }
                 }
             }

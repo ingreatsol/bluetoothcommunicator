@@ -156,6 +156,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     private void onSentNotification(final BluetoothDevice device, final int status) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
@@ -193,8 +194,10 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-    private void onRequestCharacteristicRead(final BluetoothDevice device, final int requestId, final int offset, final BluetoothGattCharacteristic characteristic) {
+    private void onRequestCharacteristicRead(final BluetoothDevice device, final int requestId, final int offset,
+                                             final BluetoothGattCharacteristic characteristic) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
                 int index = channels.indexOf(new Peer(device, null, true));
@@ -241,6 +244,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         bluetoothGattServer.addService(service);
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onRequestCharacteristicWrite(final BluetoothDevice device, final int requestId,
                                               final BluetoothGattCharacteristic characteristic,
@@ -411,6 +415,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     private void onChangeConnectionState(BluetoothDevice device, final int newState, final BluetoothConnectionClient client) {
         final Peer peer = new Peer(device, null, false);
         //anche se non serve si mette solo per questioni di simmetria col server a livello programmatico
@@ -502,6 +507,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void acceptConnection(final Peer peer) {
         mainHandler.post(() -> {
@@ -518,6 +524,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public void rejectConnection(final Peer peer) {
         mainHandler.post(() -> {
@@ -554,6 +561,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
         });    // to cancel a possible connection in progress
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     public void readPhy(final Peer peer) {
         mainHandler.post(() -> {

@@ -166,7 +166,10 @@ class ServerChannel extends Channel {
                     if (output != null) {
                         output.setValue(String.valueOf(BluetoothConnection.ACCEPT).getBytes(StandardCharsets.UTF_8));
                         sendingCharacteristic = BluetoothConnectionServer.CONNECTION_RESPONSE_UUID;
-                        success = bluetoothGattServer.notifyCharacteristicChanged(getPeer().getRemoteDevice(bluetoothAdapter), output, true);
+                        success = bluetoothGattServer.notifyCharacteristicChanged(
+                                getPeer().getRemoteDevice(bluetoothAdapter),
+                                output,
+                                true);
                     }
                 }
             }

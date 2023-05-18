@@ -106,6 +106,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onWriteCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
         mainHandler.post(() -> {
@@ -164,6 +165,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onReadCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
         Log.e("readResponse", "received");
@@ -217,6 +219,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onChangedCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
         mainHandler.post(() -> {
@@ -324,6 +327,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onConnected(@NonNull final BluetoothGatt gatt) {
         synchronized (channelsLock) {
@@ -356,6 +360,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         }
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onDisconnected(@NonNull final BluetoothGatt gatt) {
         synchronized (channelsLock) {
@@ -413,6 +418,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         }
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onDiscoveredServices(final BluetoothGatt gatt) {
         mainHandler.post(() -> {
@@ -450,6 +456,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         });
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onChangedMtu(final BluetoothGatt gatt) {
         mainHandler.post(() -> {
@@ -525,10 +532,20 @@ class BluetoothConnectionClient extends BluetoothConnection {
                     // connection
                     channels.add(new ClientChannel(peer));
                     index = channels.size() - 1;
-                    BluetoothGatt gatt = channels.get(index)
+
+                    BluetoothGatt gatt = null;
+
+                    BluetoothDevice device = channels.get(index)
                             .getPeer()
-                            .getRemoteDevice(bluetoothAdapter)
-                            .connectGatt(context, false, channelsCallback, BluetoothDevice.TRANSPORT_LE);
+                            .getRemoteDevice(bluetoothAdapter);
+
+                    if (device != null) {
+                        gatt = device.connectGatt(context,
+                                false,
+                                channelsCallback,
+                                BluetoothDevice.TRANSPORT_LE);
+                    }
+
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
                     } else {
@@ -538,10 +555,18 @@ class BluetoothConnectionClient extends BluetoothConnection {
 
                 } else if (channels.get(index).getPeer().isReconnecting()) {
                     // reconnection
-                    BluetoothGatt gatt = channels.get(index)
+                    BluetoothGatt gatt = null;
+
+                    BluetoothDevice device = channels.get(index)
                             .getPeer()
-                            .getRemoteDevice(bluetoothAdapter)
-                            .connectGatt(context, false, channelsCallback, BluetoothDevice.TRANSPORT_LE);
+                            .getRemoteDevice(bluetoothAdapter);
+
+                    if (device != null) {
+                        gatt = device.connectGatt(context,
+                                false,
+                                channelsCallback,
+                                BluetoothDevice.TRANSPORT_LE);
+                    }
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
                     } else {
@@ -553,6 +578,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         }
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     public void readPhy(final Peer peer) {
         mainHandler.post(() -> {
