@@ -933,7 +933,15 @@ public class BluetoothCommunicator {
         connectionServer.updateName(uniqueName);
         connectionClient.updateName(uniqueName);
 
-        if (isAdvertising()) {
+        //name update
+        String originalName = bluetoothAdapter.getName();
+        String originalNameSaved = BluetoothTools.getOriginalBluetoothName(context);
+
+        if (originalNameSaved.isEmpty() || (!originalName.equals(originalNameSaved) && !originalName.equals(uniqueName))) {
+            BluetoothTools.setOriginalBluetoothName(context, originalName);
+        }
+
+        if (!originalName.equals(uniqueName) && isAdvertising()){
             bluetoothAdapter.setName(uniqueName);
         }
 
