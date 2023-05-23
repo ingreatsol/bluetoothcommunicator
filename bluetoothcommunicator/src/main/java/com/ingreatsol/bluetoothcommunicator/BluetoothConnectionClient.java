@@ -531,16 +531,13 @@ class BluetoothConnectionClient extends BluetoothConnection {
                     channels.add(new ClientChannel(peer));
                     index = channels.size() - 1;
 
-                    BluetoothGatt gatt;
-
-                    BluetoothDevice device = channels.get(index)
+                    BluetoothGatt gatt = channels.get(index)
                             .getPeer()
-                            .getRemoteDevice(bluetoothAdapter);
-
-                    gatt = device.connectGatt(context,
-                            false,
-                            channelsCallback,
-                            BluetoothDevice.TRANSPORT_LE);
+                            .getRemoteDevice(bluetoothAdapter)
+                            .connectGatt(context,
+                                    false,
+                                    channelsCallback,
+                                    BluetoothDevice.TRANSPORT_LE);
 
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
@@ -551,16 +548,13 @@ class BluetoothConnectionClient extends BluetoothConnection {
 
                 } else if (channels.get(index).getPeer().isReconnecting()) {
                     // reconnection
-                    BluetoothGatt gatt;
-
-                    BluetoothDevice device = channels.get(index)
+                    BluetoothGatt gatt = channels.get(index)
                             .getPeer()
-                            .getRemoteDevice(bluetoothAdapter);
-
-                    gatt = device.connectGatt(context,
-                            false,
-                            channelsCallback,
-                            BluetoothDevice.TRANSPORT_LE);
+                            .getRemoteDevice(bluetoothAdapter)
+                            .connectGatt(context,
+                                    false,
+                                    channelsCallback,
+                                    BluetoothDevice.TRANSPORT_LE);
                     if (gatt != null) {
                         ((ClientChannel) channels.get(index)).setBluetoothGatt(gatt);
                     } else {
