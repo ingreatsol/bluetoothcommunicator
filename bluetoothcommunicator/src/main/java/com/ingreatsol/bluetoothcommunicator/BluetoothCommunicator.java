@@ -33,11 +33,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
 import com.ingreatsol.bluetoothcommunicator.tools.BluetoothTools;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -256,10 +258,11 @@ public class BluetoothCommunicator {
     private boolean discovering = false;
     private boolean destroying = false;
     private final int strategy;
-    private String uniqueName;
+    private final String uniqueName;
     private ArrayDeque<Message> pendingMessages = new ArrayDeque<>();
     private ArrayDeque<Message> pendingData = new ArrayDeque<>();
     // objects
+    @NonNull
     private final Context context;
     @Nullable
     private final BluetoothAdapter bluetoothAdapter;
@@ -274,19 +277,17 @@ public class BluetoothCommunicator {
     private final Object messagesLock = new Object();
     private final Object dataLock = new Object();
     private final Object bluetoothLock = new Object();
+    ParcelUuid uuidService = new ParcelUuid(BluetoothConnection.APP_UUID);
 
     /**
      * Constructor of BluetoothCommunicator
      *
-     * @param context  context
-     * @param name     the name by which the other devices will see us (limited to 18 characters
-     *                 and can be only characters listed in BluetoothTools.getSupportedUTFCharacters(context) because the number of bytes for advertising beacon is limited)
-     * @param strategy (for now the only supported strategy is BluetoothCommunicator.STRATEGY_P2P_WITH_RECONNECTION)
+     * @param context context
      */
-    public BluetoothCommunicator(final Context context, String name, int strategy) {
+    public BluetoothCommunicator(@NonNull final Context context) {
         this.context = context;
-        this.strategy = strategy;
-        this.uniqueName = name + BluetoothTools.generateBluetoothNameId(context);
+        this.strategy = STRATEGY_P2P_WITH_RECONNECTION;
+        this.uniqueName = BluetoothTools.generateBluetoothNameId(context);
         mainHandler = new Handler(Looper.getMainLooper());
 
         advertiseCallback = new AdvertiseCallback() {
@@ -310,10 +311,11 @@ public class BluetoothCommunicator {
                     case ScanSettings.CALLBACK_TYPE_FIRST_MATCH: {
                         BluetoothDevice device1 = result.getDevice();
                         if (result.getScanRecord() != null && connectionClient != null) {
-                            String uniqueName = result.getScanRecord().getDeviceName();
-                            if (uniqueName != null && uniqueName.length() > 0) {
-                                Peer peerFound = new Peer(device1, uniqueName, false);
-                                if (connectionClient.getReconnectingPeers().contains(peerFound.getUniqueName())) {
+                            String name = result.getScanRecord().getDeviceName();
+                            String uniqueName = new String(result.getScanRecord().getServiceData(uuidService), StandardCharsets.UTF_8);
+                            if (name != null && name.length() > 0) {
+                                Peer peerFound = new Peer(device1, name, uniqueName, false);
+                                if (connectionClient.getReconnectingPeers().contains(peerFound.toString())) {
                                     connectionClient.onReconnectingPeerFound(peerFound);
                                 } else {
                                     notifyPeerFound(peerFound);
@@ -324,7 +326,7 @@ public class BluetoothCommunicator {
                     }
                     case ScanSettings.CALLBACK_TYPE_MATCH_LOST: {
                         BluetoothDevice device1 = result.getDevice();
-                        notifyPeerLost(new Peer(device1, null, false));
+                        notifyPeerLost(new Peer(device1, false));
                         break;
                     }
                 }
@@ -357,13 +359,10 @@ public class BluetoothCommunicator {
      * Constructor of BluetoothCommunicator that adds a callback (it can also be added with addCallback
      *
      * @param context  context
-     * @param name     the name by which the other devices will see us (limited to 18 characters
-     *                 and can be only characters listed in BluetoothTools.getSupportedUTFCharacters(context) because the number of bytes for advertising beacon is limited)
-     * @param strategy (for now the only supported strategy is BluetoothCommunicator.STRATEGY_P2P_WITH_RECONNECTION)
      * @param callback callback added, like in addCallback
      */
-    public BluetoothCommunicator(final Context context, String name, int strategy, Callback callback) {
-        this(context, name, strategy);
+    public BluetoothCommunicator(final Context context, Callback callback) {
+        this(context);
         addCallback(callback);
     }
 
@@ -444,19 +443,13 @@ public class BluetoothCommunicator {
                 @Override
                 public void onMessageReceived(Message message, int source) {
                     super.onMessageReceived(message, source);
-                    assert message.getSender() != null;
-                    if (message.getSender().getUniqueName().length() > 0) {
-                        notifyMessageReceived(message, source);
-                    }
+                    notifyMessageReceived(message, source);
                 }
 
                 @Override
                 public void onDataReceived(Message data, int source) {
                     super.onMessageReceived(data, source);
-                    assert data.getSender() != null;
-                    if (data.getSender().getUniqueName().length() > 0) {
-                        notifyDataReceived(data, source);
-                    }
+                    notifyDataReceived(data, source);
                 }
 
                 @Override
@@ -574,18 +567,6 @@ public class BluetoothCommunicator {
             return BLUETOOTH_LE_NOT_SUPPORTED;
         }
 
-        //name update
-        String originalName = bluetoothAdapter.getName();
-        String originalNameSaved = BluetoothTools.getOriginalBluetoothName(context);
-
-        if (originalNameSaved.isEmpty() || (!originalName.equals(originalNameSaved) && !originalName.equals(uniqueName))) {
-            BluetoothTools.setOriginalBluetoothName(context, originalName);
-        }
-
-        if (!originalName.equals(uniqueName)){
-            bluetoothAdapter.setName(uniqueName);
-        }
-
         //start advertizing
         AdvertiseSettings advertiseSettings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)  //alto
@@ -593,8 +574,10 @@ public class BluetoothCommunicator {
                 .setConnectable(true)
                 .setTimeout(0)
                 .build();
+
         AdvertiseData advertiseData = new AdvertiseData.Builder()
-                .addServiceUuid(new ParcelUuid(BluetoothConnection.APP_UUID))
+                .addServiceUuid(uuidService)
+                .addServiceData(uuidService, uniqueName.getBytes(StandardCharsets.UTF_8))
                 .setIncludeDeviceName(true)
                 .build();
 
@@ -667,9 +650,6 @@ public class BluetoothCommunicator {
         if (bluetoothAdapter == null) {
             return BLUETOOTH_LE_NOT_SUPPORTED;
         }
-
-        //name restore
-        bluetoothAdapter.setName(BluetoothTools.getOriginalBluetoothName(context));
 
         BluetoothLeAdvertiser advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
 
@@ -909,52 +889,6 @@ public class BluetoothCommunicator {
                 });
             }
         }
-    }
-
-    /**
-     * this method set the name with which you would be seen by other devices, the name must be limited to 18 characters
-     * and can be only characters listed in BluetoothTools.getSupportedUTFCharacters() because the number of bytes for advertising beacon is limited,
-     * there is no controls for this so if you not follow these restrictions BluetoothCommunicator will not work correctly.
-     * <br /><br />
-     * To the name will be added 4 random symbols in a completely transparent way (this 4 symbols will exixts only inside BluetoothCommunicator, which removes them before the name gets on the outside),
-     * this allows to have a unique identification (for BluetoothCommunicator, not for the user) even for peers with the same name
-     *
-     * @param name bluetooth
-     * @return SUCCESS if bluetooth le is supported by the device or BLUETOOTH_LE_NOT_SUPPORTED if not (or rarely if we had a generic bluetooth problem)
-     */
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-    public int setName(String name) {
-        if (bluetoothAdapter == null || connectionServer == null || connectionClient == null) {
-            return BLUETOOTH_LE_NOT_SUPPORTED;
-        }
-
-        this.uniqueName = name + BluetoothTools.generateBluetoothNameId(context);
-
-        connectionServer.updateName(uniqueName);
-        connectionClient.updateName(uniqueName);
-
-        //name update
-        String originalName = bluetoothAdapter.getName();
-        String originalNameSaved = BluetoothTools.getOriginalBluetoothName(context);
-
-        if (originalNameSaved.isEmpty() || (!originalName.equals(originalNameSaved) && !originalName.equals(uniqueName))) {
-            BluetoothTools.setOriginalBluetoothName(context, originalName);
-        }
-
-        if (!originalName.equals(uniqueName) && isAdvertising()){
-            bluetoothAdapter.setName(uniqueName);
-        }
-
-        return SUCCESS;
-    }
-
-    /**
-     * This method will return the name + 4 symbols used by BluetoothCommunicator to unique identify a peer (in case there are more peers with the same name)
-     *
-     * @return uniqueName
-     */
-    public String getUniqueName() {
-        return uniqueName;
     }
 
     /**

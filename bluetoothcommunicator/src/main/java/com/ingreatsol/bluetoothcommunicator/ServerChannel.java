@@ -234,25 +234,6 @@ class ServerChannel extends Channel {
         }
     }
 
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-    public boolean notifyNameUpdated(String name) {
-        synchronized (lock) {
-            boolean success = false;
-            if (bluetoothGattServer != null && getPeer().isFullyConnected()) {
-                BluetoothGattService service = bluetoothGattServer.getService(BluetoothConnection.APP_UUID);
-                if (service != null) {
-                    BluetoothGattCharacteristic output = service.getCharacteristic(BluetoothConnectionServer.NAME_UPDATE_SEND_UUID);
-                    if (output != null) {
-                        output.setValue(name);
-                        sendingCharacteristic = BluetoothConnectionServer.NAME_UPDATE_SEND_UUID;
-                        success = bluetoothGattServer.notifyCharacteristicChanged(getPeer().getRemoteDevice(bluetoothAdapter), output, true);
-                    }
-                }
-            }
-            return success;
-        }
-    }
-
     @Override
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyDisconnection(DisconnectionNotificationCallback disconnectionNotificationCallback) {

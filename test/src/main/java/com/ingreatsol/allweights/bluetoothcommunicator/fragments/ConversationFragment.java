@@ -18,6 +18,7 @@ package com.ingreatsol.allweights.bluetoothcommunicator.fragments;
 
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -124,6 +125,7 @@ public class ConversationFragment extends Fragment {
         constraintLayout = view.findViewById(R.id.container2);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -148,12 +150,9 @@ public class ConversationFragment extends Fragment {
             }
         };
 
-        mAdapter = new MessagesAdapter(global.getBluetoothCommunicator().getUniqueName(), new MessagesAdapter.Callback() {
-            @Override
-            public void onFirstItemAdded() {
-                description.setVisibility(View.GONE);
-                mRecyclerView.setVisibility(View.VISIBLE);
-            }
+        mAdapter = new MessagesAdapter(global.getBluetoothCommunicator().getBluetoothAdapter().getName(), () -> {
+            description.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.VISIBLE);
         });
         mRecyclerView.setAdapter(mAdapter);
 

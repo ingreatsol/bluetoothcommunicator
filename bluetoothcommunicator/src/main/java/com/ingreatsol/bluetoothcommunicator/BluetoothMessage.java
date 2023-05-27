@@ -242,7 +242,7 @@ class BluetoothMessage implements Parcelable {
     }
 
     //parcel implementation
-    public static final Creator<BluetoothMessage> CREATOR = new Creator<BluetoothMessage>() {
+    public static final Creator<BluetoothMessage> CREATOR = new Creator<>() {
         @NonNull
         @Contract("_ -> new")
         @Override

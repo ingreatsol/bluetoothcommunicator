@@ -19,7 +19,6 @@ package com.ingreatsol.allweights.bluetoothcommunicator.fragments;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -108,7 +107,11 @@ public class PairingFragment extends Fragment {
                 super.onConnectionRequest(peer);
                 if (peer != null) {
                     String time = DateFormat.getDateTimeInstance().format(new Date());
-                    connectionRequestDialog = new RequestDialog(activity, "Accept connection request from " + peer.getName() + " ?", 15000, (dialog, which) -> activity.acceptConnection(peer), (dialog, which) -> activity.rejectConnection(peer));
+                    connectionRequestDialog = new RequestDialog(activity,
+                            "Accept connection request from " + peer.getName() + " ?",
+                            15000,
+                            (dialog, which) -> activity.acceptConnection(peer),
+                            (dialog, which) -> activity.rejectConnection(peer));
                     connectionRequestDialog.setOnCancelListener(dialog -> connectionRequestDialog = null);
                     connectionRequestDialog.show();
                 }
@@ -138,7 +141,7 @@ public class PairingFragment extends Fragment {
                         disappearLoading(true, null);
                         connectingPeer = null;
                         if (errorCode == BluetoothCommunicator.CONNECTION_REJECTED) {
-                            Toast.makeText(activity, peer.getName() + " refused the connection request", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, peer.getDevice().getName() + " refused the connection request", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(activity, "Connection error", Toast.LENGTH_SHORT).show();
                         }
@@ -153,9 +156,9 @@ public class PairingFragment extends Fragment {
                 synchronized (lock) {
                     if (listView != null) {
                         BluetoothAdapter bluetoothAdapter = global.getBluetoothCommunicator().getBluetoothAdapter();
+                        Log.e("peer", peer.toString());
                         Log.e("peer", peer.getName());
-                        Log.e("peer", peer.getUniqueName());
-                        int index = listView.indexOfPeer(peer.getUniqueName());
+                        int index = listView.indexOfPeer(peer.toString());
                         if (index == -1) {
                             listView.add(peer);
                         } else {
@@ -332,15 +335,13 @@ public class PairingFragment extends Fragment {
     private void connect(@NonNull final Peer peer) {
         connectingPeer = peer;
         confirmConnectionPeer = peer;
-        connectionConfirmDialog = new RequestDialog(activity, "Are you sure to connect with " + peer.getName() + "?", new DialogInterface.OnClickListener() {
-            @Override
-            @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-            public void onClick(DialogInterface dialog, int which) {
-                deactivateInputs();
-                appearLoading(null);
-                activity.connect(peer);
-                startConnectionTimer();
-            }
+        connectionConfirmDialog = new RequestDialog(activity,
+                "Are you sure to connect with " + peer.getName() + "?",
+                (dialog, which) -> {
+            deactivateInputs();
+            appearLoading(null);
+            activity.connect(peer);
+            startConnectionTimer();
         }, null);
         connectionConfirmDialog.setOnCancelListener(dialog -> {
             confirmConnectionPeer = null;

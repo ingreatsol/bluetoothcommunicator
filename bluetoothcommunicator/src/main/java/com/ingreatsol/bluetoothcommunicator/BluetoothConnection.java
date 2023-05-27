@@ -22,6 +22,7 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -72,8 +73,6 @@ abstract class BluetoothConnection {
         };
     }
 
-    public abstract void updateName(String uniqueName);
-
     public ArrayList<Peer> getConnectedPeers() {
         synchronized (channelsLock) {
             ArrayList<Peer> peers = new ArrayList<>();
@@ -91,7 +90,7 @@ abstract class BluetoothConnection {
                 Peer receiver = message.getReceiver();
                 if (receiver != null) {
                     for (int i = 0; i < channels.size(); i++) {
-                        if (!receiver.getUniqueName().equals(channels.get(i).getPeer().getUniqueName())){
+                        if (!receiver.toString().equals(channels.get(i).getPeer().toString())) {
                             channels.remove(i);
                             i--;
                         }
@@ -128,7 +127,7 @@ abstract class BluetoothConnection {
                 Peer receiver = data.getReceiver();
                 if (receiver != null) {
                     for (int i = 0; i < channels.size(); i++) {
-                        if (!receiver.getUniqueName().equals(channels.get(i).getPeer().getUniqueName())){
+                        if (!receiver.toString().equals(channels.get(i).getPeer().toString())) {
                             channels.remove(i);
                             i--;
                         }
@@ -239,6 +238,7 @@ abstract class BluetoothConnection {
         }.start();
     }
 
+
     public abstract void readPhy(Peer peer);
 
     protected String getUniqueName() {
@@ -250,14 +250,14 @@ abstract class BluetoothConnection {
     }
 
     /**
-     * @return list composed by unique names of reconnecting peers
+     * @return list composed by unique name of reconnecting peers
      */
     public ArrayList<String> getReconnectingPeers() {
         synchronized (channelsLock) {
             ArrayList<String> reconnectingPeer = new ArrayList<>();
             for (Channel channel : channels) {
                 if (channel.getPeer().isReconnecting()) {
-                    reconnectingPeer.add(channel.getPeer().getUniqueName());
+                    reconnectingPeer.add(channel.getPeer().toString());
                 }
             }
             return reconnectingPeer;
@@ -266,7 +266,7 @@ abstract class BluetoothConnection {
 
     public int indexOfChannel(String uniqueName) {
         for (int i = 0; i < channels.size(); i++) {
-            if (channels.get(i).getPeer().getUniqueName().equals(uniqueName)) {
+            if (channels.get(i).getPeer().toString().equals(uniqueName)) {
                 return i;
             }
         }
@@ -331,7 +331,7 @@ abstract class BluetoothConnection {
          * <br /><br />
          * To send disconnection request to connected peer you need to call bluetoothCommunicator.disconnect(peer);
          *
-         * @param peer the peer with you have established the connection
+         * @param peer   the peer with you have established the connection
          * @param source if in this connection you are a client (BluetoothCommunicator.CLIENT) or a server (BluetoothCommunicator.SERVER), it can be ignored.
          */
         public void onConnectionSuccess(Peer peer, int source) {
@@ -342,7 +342,7 @@ abstract class BluetoothConnection {
          * to know the cause of the failure see errorCode (BluetoothCommunicator.CONNECTION_REJECTED
          * means rejected connection and BluetoothCommunicator.ERROR means generic error).
          *
-         * @param peer the peer with you have failed the connection
+         * @param peer      the peer with you have failed the connection
          * @param errorCode the core of the error for know if the cause is a rejection or a generic problem
          */
         public void onConnectionFailed(Peer peer, int errorCode) {
@@ -374,7 +374,7 @@ abstract class BluetoothConnection {
          * as client or as server.
          *
          * @param message received text message
-         * @param source indicate only if you have received the message as clients or as servers, it can be ignored
+         * @param source  indicate only if you have received the message as clients or as servers, it can be ignored
          */
         public void onMessageReceived(Message message, int source) {
         }
@@ -384,7 +384,7 @@ abstract class BluetoothConnection {
          * the peer that have sent the message, you can ignore source, it indicate only if you have received the message
          * as client or as server.
          *
-         * @param data received data message
+         * @param data   received data message
          * @param source indicate only if you have received the message as clients or as servers, it can be ignored
          */
         public void onDataReceived(Message data, int source) {
@@ -397,7 +397,7 @@ abstract class BluetoothConnection {
          * In case the peer updated is connected and you have saved connected peers you have to update the peer if you want to successfully
          * send a message or a disconnection request to that peer.
          *
-         * @param peer current peer
+         * @param peer    current peer
          * @param newPeer current peer updated
          */
         public void onPeerUpdated(Peer peer, Peer newPeer) {

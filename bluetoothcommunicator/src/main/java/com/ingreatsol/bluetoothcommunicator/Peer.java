@@ -22,13 +22,11 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
 import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 /**
  * This class represents a device that we can find, with which we can establish a connection, and communicate (obviously in that order).
@@ -42,9 +40,9 @@ import java.util.Objects;
  */
 public class Peer implements Parcelable, Cloneable {
     @NonNull
-    private String uniqueName;
+    private final String uniqueName;
     @NonNull
-    private String name;
+    private final String name;
     @NonNull
     private BluetoothDevice device;
     private boolean isHardwareConnected = false;
@@ -58,19 +56,28 @@ public class Peer implements Parcelable, Cloneable {
      * the discovery.
      *
      * @param device      device
+     * @param isConnected isConnected
+     */
+    public Peer(@NonNull BluetoothDevice device, boolean isConnected) {
+        this(device, "", "", isConnected);
+    }
+
+    /**
+     * This constructor is used internally by BluetoothCommunicator, you shouldn't create a Peer but instead use the peers founded by
+     * the discovery.
+     *
+     * @param device      device
      * @param uniqueName  uniqueName
      * @param isConnected isConnected
      */
-    public Peer(@NonNull BluetoothDevice device, @Nullable String uniqueName, boolean isConnected) {
+    public Peer(@NonNull BluetoothDevice device,
+                @NonNull String name,
+                @NonNull String uniqueName,
+                boolean isConnected) {
         this.device = device;
-        if (uniqueName == null || uniqueName.length() < 2) {
-            this.uniqueName = "";
-            this.name = "";
-        } else {
-            this.uniqueName = uniqueName;
-            this.name = uniqueName.substring(0, uniqueName.length() - 2);  // because the last two digits are an id
-        }
         this.isConnected = isConnected;
+        this.name = name;
+        this.uniqueName = uniqueName;
     }
 
     /**
@@ -79,8 +86,8 @@ public class Peer implements Parcelable, Cloneable {
      * @param peer peer to copy
      */
     public Peer(@NonNull Peer peer) {
-        uniqueName = peer.uniqueName;
         name = peer.name;
+        uniqueName = peer.uniqueName;
         device = peer.device;
         isHardwareConnected = peer.isHardwareConnected;
         isConnected = peer.isConnected;
@@ -102,9 +109,7 @@ public class Peer implements Parcelable, Cloneable {
         if (obj instanceof Peer) {
             Peer peer = (Peer) obj;
             // check that prioritizing the name is not a problem
-            if (device.getAddress() != null && peer.getDevice().getAddress() != null) {
-                return device.getAddress().equals(peer.getDevice().getAddress());
-            }
+            return toString().equals(peer.toString());
         }
 
         if (obj instanceof Channel) {
@@ -162,6 +167,7 @@ public class Peer implements Parcelable, Cloneable {
         return name;
     }
 
+
     /**
      * Sets the bluetooth device for this peer.
      *
@@ -172,18 +178,6 @@ public class Peer implements Parcelable, Cloneable {
     }
 
     /**
-     * Sets the unique name of this peer.
-     *
-     * @param uniqueName name
-     */
-    public void setUniqueName(@NonNull String uniqueName) {
-        if (uniqueName.length() >= 2) {
-            this.uniqueName = uniqueName;
-            this.name = uniqueName.substring(0, uniqueName.length() - 2);  // because the last two digits are an id
-        }
-    }
-
-    /**
      * Return the normal name of this peer.
      *
      * @return name
@@ -191,7 +185,7 @@ public class Peer implements Parcelable, Cloneable {
     @NonNull
     @Override
     public String toString() {
-        return name;
+        return name + uniqueName;
     }
 
     @NonNull
@@ -332,8 +326,8 @@ public class Peer implements Parcelable, Cloneable {
 
     //parcelable implementation
     public Peer(@NonNull Parcel in) {
-        uniqueName = Objects.requireNonNull(in.readString());
-        name = uniqueName.substring(0, uniqueName.length() - 2);  // because the last two digits are an id
+        name = in.readString();
+        uniqueName = in.readString();
         device = in.readParcelable(BluetoothDevice.class.getClassLoader());
         isHardwareConnected = in.readByte() != 0;
         isConnected = in.readByte() != 0;
@@ -342,7 +336,7 @@ public class Peer implements Parcelable, Cloneable {
         isDisconnecting = in.readByte() != 0;
     }
 
-    public static final Creator<Peer> CREATOR = new Creator<Peer>() {
+    public static final Creator<Peer> CREATOR = new Creator<>() {
         @NonNull
         @Contract("_ -> new")
         @Override
@@ -365,6 +359,7 @@ public class Peer implements Parcelable, Cloneable {
 
     @Override
     public void writeToParcel(@NonNull Parcel parcel, int i) {
+        parcel.writeString(name);
         parcel.writeString(uniqueName);
         parcel.writeParcelable(device, i);
         parcel.writeByte((byte) (isHardwareConnected ? 1 : 0));

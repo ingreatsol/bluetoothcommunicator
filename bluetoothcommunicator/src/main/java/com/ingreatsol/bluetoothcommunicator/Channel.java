@@ -201,8 +201,6 @@ abstract class Channel {
 
     public abstract void readPhy();
 
-    public abstract boolean notifyNameUpdated(String name);
-
     public Timer getReconnectionTimer() {
         return reconnectionTimer;
     }

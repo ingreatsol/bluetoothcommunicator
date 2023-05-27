@@ -46,7 +46,8 @@ class BluetoothConnectionClient extends BluetoothConnection {
     public BluetoothConnectionClient(final Context context,
                                      String uniqueName,
                                      @NonNull final BluetoothAdapter bluetoothAdapter,
-                                     final int strategy, final Callback callback) {
+                                     final int strategy,
+                                     final Callback callback) {
         super(uniqueName, bluetoothAdapter, strategy, callback);
 
         this.context = context;
@@ -111,7 +112,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     private void onWriteCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+                int index = channels.indexOf(new Peer(gatt.getDevice(), true));
                 if (index != -1) {
                     if (BluetoothConnectionServer.CONNECTION_REQUEST_UUID.equals(characteristic.getUuid())) {
                         if (status == REJECT) {
@@ -172,7 +173,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+                    int index = channels.indexOf(new Peer(gatt.getDevice(), true));
 
                     //characteristic read
                     if (characteristic.getUuid().equals(BluetoothConnectionServer.DATA_SEND_UUID)) {
@@ -223,7 +224,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     private void onChangedCharacteristic(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+                int index = channels.indexOf(new Peer(gatt.getDevice(), true));
                 if (characteristic.getUuid().equals(BluetoothConnectionServer.MTU_RESPONSE_UUID)) {
                     if (index != -1) {
                         mainHandler.post(() -> {
@@ -271,7 +272,6 @@ class BluetoothConnectionClient extends BluetoothConnection {
                 } else if (characteristic.getUuid().equals(BluetoothConnectionServer.NAME_UPDATE_SEND_UUID)) {
                     if (index != -1) {
                         Peer newPeer = (Peer) channels.get(index).getPeer().clone();
-                        newPeer.setUniqueName(new String(characteristic.getValue(), StandardCharsets.UTF_8));
                         notifyPeerUpdated(channels.get(index), newPeer);
                     }
 
@@ -329,7 +329,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     private void onConnected(@NonNull final BluetoothGatt gatt) {
         synchronized (channelsLock) {
-            int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+            int index = channels.indexOf(new Peer(gatt.getDevice(), true));
             if (index != -1) {     // is used to manage synchronization with the server to avoid adding a device that connects to the latter instead of us
                 refreshDeviceCache(gatt);  // is used to avoid cache problems
                 channels.get(index).getPeer().setHardwareConnected(true);
@@ -363,11 +363,11 @@ class BluetoothConnectionClient extends BluetoothConnection {
     private void onDisconnected(@NonNull final BluetoothGatt gatt) {
         synchronized (channelsLock) {
             gatt.close();
-            int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+            int index = channels.indexOf(new Peer(gatt.getDevice(), true));
             if (index == -1) {  // in case the device of the channel that failed the reconnection has been changed by onReconnectingPeerFound
                 Peer peer = pendingConnections.peekFirst();
                 if (peer != null) {
-                    index = indexOfChannel(peer.getUniqueName());  // the comparison will thus be based on the name instead of the address (which is different in this case) (to be reviewed in case of problems)
+                    index = indexOfChannel(peer.toString());  // the comparison will thus be based on the name instead of the address (which is different in this case) (to be reviewed in case of problems)
                 }
             }
 
@@ -421,7 +421,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     private void onDiscoveredServices(final BluetoothGatt gatt) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+                int index = channels.indexOf(new Peer(gatt.getDevice(), true));
                 if (index != -1) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         if (bluetoothAdapter.isLe2MPhySupported()) {
@@ -459,7 +459,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     private void onChangedMtu(final BluetoothGatt gatt) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(gatt.getDevice(), null, true));
+                int index = channels.indexOf(new Peer(gatt.getDevice(), true));
                 if (index != -1) {
                     if (!channels.get(index).getPeer().isConnected() && !channels.get(index).getPeer().isDisconnecting()) {
                         try {
@@ -525,7 +525,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
         synchronized (channelsLock) {
             Peer peer = pendingConnections.peekFirst();
             if (peer != null) {
-                int index = indexOfChannel(peer.getUniqueName());
+                int index = indexOfChannel(peer.toString());
                 if (index == -1) {
                     // connection
                     channels.add(new ClientChannel(peer));
@@ -580,18 +580,6 @@ class BluetoothConnectionClient extends BluetoothConnection {
     }
 
     @Override
-    public void updateName(final String uniqueName) {
-        mainHandler.post(() -> {
-            synchronized (channelsLock) {
-                setUniqueName(uniqueName);
-                for (Channel channel : channels) {
-                    channel.notifyNameUpdated(uniqueName);
-                }
-            }
-        });
-    }
-
-    @Override
     protected void stopReconnection(@NonNull final Channel channel) {
         channel.resetConnectionCompleteTimer();
         channel.resetReconnectionTimer();   // if it has not been called since the timer has expired
@@ -626,7 +614,7 @@ class BluetoothConnectionClient extends BluetoothConnection {
     public void onReconnectingPeerFound(final Peer peer) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = indexOfChannel(peer.getUniqueName());
+                int index = indexOfChannel(peer.toString());
                 if (index != -1 && !channels.get(index).getPeer().isHardwareConnected() && channels.get(index).getPeer().isReconnecting() && !channels.get(index).getPeer().isDisconnecting()) {
                     // channel update
                     Peer newPeer = (Peer) channels.get(index).getPeer().clone();

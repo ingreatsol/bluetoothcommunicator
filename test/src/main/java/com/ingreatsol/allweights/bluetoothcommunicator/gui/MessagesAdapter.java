@@ -16,6 +16,7 @@
 
 package com.ingreatsol.allweights.bluetoothcommunicator.gui;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -71,23 +72,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return new SendHolder(LayoutInflater.from(parent.getContext()), parent);  // to not return null
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof MessageHolder) {
             Message message = mResults.get(position);
-            if (holder instanceof ReceivedHolder && message.getSender() != null && message.getSender().getUniqueName().equals(myUniqueName)) {
+            if (holder instanceof ReceivedHolder && message.getSender() != null && message.getSender().getDevice().getName().equals(myUniqueName)) {
                 ((ReceivedHolder) holder).text.setVisibility(View.GONE);
                 ((ReceivedHolder) holder).containerSender.setVisibility(View.VISIBLE);
-                ((ReceivedHolder) holder).sender.setText(message.getSender().getName());
+                ((ReceivedHolder) holder).sender.setText(message.getSender().getDevice().getName());
             }
             ((MessageHolder) holder).setText(message.getText());
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public int getItemViewType(int position) {
         Message message = mResults.get(position);
-        if (message.getSender() == null || message.getSender().getUniqueName().equals(myUniqueName)) {
+        if (message.getSender() == null || message.getSender().getDevice().getName().equals(myUniqueName)) {
             return MINE;
         } else {
             return NON_MINE;

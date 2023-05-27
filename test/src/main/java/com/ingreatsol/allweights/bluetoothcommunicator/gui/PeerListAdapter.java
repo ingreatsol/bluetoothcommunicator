@@ -16,6 +16,7 @@
 
 package com.ingreatsol.allweights.bluetoothcommunicator.gui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -79,18 +80,18 @@ public class PeerListAdapter extends BaseAdapter {
         return 1;
     }
 
+    @SuppressLint("InflateParams")
     @Override
     public View getView(int position, View view, ViewGroup viewGroup) {
         final Object item = getItem(position);
         int itemType = getItemViewType(position);
         if (itemType == HOST) {
             Peer guiPeer = (Peer) item;
-            String peerName = ((Peer) item).getName();
+            @SuppressLint("MissingPermission") String peerName = guiPeer.getName();
             if (view == null) {
                 view = inflater.inflate(R.layout.component_row, null);
             }
             ((TextView) view.findViewById(R.id.textRow)).setText(peerName);
-
         }
         return view;
     }
@@ -119,7 +120,7 @@ public class PeerListAdapter extends BaseAdapter {
     public int indexOfPeer(String uniqueName) {
         for (int i = 0; i < array.size(); i++) {
             Peer peer = array.get(i);
-            String uniqueName1 = peer.getUniqueName();
+            String uniqueName1 = peer.toString();
             if (uniqueName1.length() > 0 && uniqueName1.equals(uniqueName)) {
                 return i;
             }

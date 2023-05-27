@@ -62,6 +62,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
     private BluetoothGattServer bluetoothGattServer;
     private final BluetoothManager bluetoothManager;
     private final BluetoothConnectionClient client;
+    @NonNull
     private final Context context;
 
     public BluetoothConnectionServer(@NonNull final Context context,
@@ -160,7 +161,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
     private void onSentNotification(final BluetoothDevice device, final int status) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(device, null, true));
+                int index = channels.indexOf(new Peer(device, true));
 
                 if (index != -1) {
                     UUID sendingCharacteristic = ((ServerChannel) channels.get(index)).getSendingCharacteristic();
@@ -200,7 +201,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
                                              final BluetoothGattCharacteristic characteristic) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(device, null, true));
+                int index = channels.indexOf(new Peer(device, true));
 
                 if (index != -1) {
                     try {
@@ -251,18 +252,14 @@ class BluetoothConnectionServer extends BluetoothConnection {
                                               final int offset, final byte[] value) {
         mainHandler.post(() -> {
             synchronized (channelsLock) {
-                int index = channels.indexOf(new Peer(device, null, true));
+                int index = channels.indexOf(new Peer(device, true));
 
                 if (characteristic.getUuid().equals(CONNECTION_REQUEST_UUID)) {
                     if (index != -1) {
                         if (!channels.get(index).getPeer().isDisconnecting()) {
                             if (!channels.get(index).getPeer().isConnected() && !channels.get(index).getPeer().isReconnecting()) {
-                                String data = new String(value, StandardCharsets.UTF_8);
-                                channels.get(index).getPeer().setUniqueName(data);
-
                                 notifyConnectionRequest(channels.get(index));
                                 bluetoothGattServer.sendResponse(device, requestId, ACCEPT, offset, null);
-
                             } else if (channels.get(index).getPeer().isReconnecting()) {
                                 bluetoothGattServer.sendResponse(device, requestId, REJECT, offset, null);  // it must be put before the disconnection otherwise we have errors
                                 stopReconnection(channels.get(index));
@@ -399,7 +396,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
                 } else if (characteristic.getUuid().equals(NAME_UPDATE_RECEIVE_UUID)) {
                     if (index != -1) {
                         Peer newPeer = (Peer) channels.get(index).getPeer().clone();
-                        newPeer.setUniqueName(new String(value, StandardCharsets.UTF_8));
                         notifyPeerUpdated(channels.get(index), newPeer);
                     }
 
@@ -415,7 +411,7 @@ class BluetoothConnectionServer extends BluetoothConnection {
 
     @SuppressWarnings("SuspiciousMethodCalls")
     private void onChangeConnectionState(BluetoothDevice device, final int newState, final BluetoothConnectionClient client) {
-        final Peer peer = new Peer(device, null, false);
+        final Peer peer = new Peer(device, false);
         //anche se non serve si mette solo per questioni di simmetria col server a livello programmatico
         mainHandler.post(() -> {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -567,17 +563,6 @@ class BluetoothConnectionServer extends BluetoothConnection {
                 int index = channels.indexOf(peer);
                 if (index != -1) {
                     channels.get(index).readPhy();
-                }
-            }
-        });
-    }
-
-    public void updateName(final String uniqueName) {
-        mainHandler.post(() -> {
-            synchronized (channelsLock) {
-                setUniqueName(uniqueName);
-                for (Channel channel : channels) {
-                    channel.notifyNameUpdated(uniqueName);
                 }
             }
         });

@@ -20,10 +20,6 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 
 import com.ingreatsol.bluetoothcommunicator.BluetoothCommunicator;
-import com.ingreatsol.bluetoothcommunicator.tools.BluetoothTools;
-
-import java.util.ArrayList;
-import java.util.Random;
 
 public class Global extends Application {
     private BluetoothCommunicator bluetoothCommunicator;
@@ -32,22 +28,8 @@ public class Global extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        String name = android.os.Build.MODEL;
-        //compatibily check for supported characters
-        ArrayList<Character> supportedCharacters = BluetoothTools.getSupportedUTFCharacters();
-        boolean equals = true;
-        for (int i = 0; i < name.length() && equals; i++) {
-            if (!supportedCharacters.contains(Character.valueOf(name.charAt(i)))) {
-                equals = false;
-            }
-        }
-        if (!equals || name.length() > 18) {
-            name = "User " + new Random().nextInt(21);
-        }
 
-        name = name + " prueba";
-
-        bluetoothCommunicator = new BluetoothCommunicator(this, name, BluetoothCommunicator.STRATEGY_P2P_WITH_RECONNECTION);
+        bluetoothCommunicator = new BluetoothCommunicator(this);
     }
 
     public BluetoothCommunicator getBluetoothCommunicator() {

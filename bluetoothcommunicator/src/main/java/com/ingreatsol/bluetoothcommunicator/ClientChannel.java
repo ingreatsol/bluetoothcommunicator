@@ -186,25 +186,6 @@ class ClientChannel extends Channel {
 
     @Override
     @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
-    public boolean notifyNameUpdated(String uniqueName) {
-        synchronized (lock) {
-            boolean success = false;
-            if (bluetoothGatt != null && getPeer().isFullyConnected()) {
-                BluetoothGattService service = bluetoothGatt.getService(BluetoothConnection.APP_UUID);
-                if (service != null) {
-                    BluetoothGattCharacteristic output = service.getCharacteristic(BluetoothConnectionServer.NAME_UPDATE_RECEIVE_UUID);
-                    if (output != null) {
-                        output.setValue(uniqueName.getBytes(StandardCharsets.UTF_8));
-                        success = bluetoothGatt.writeCharacteristic(output);
-                    }
-                }
-            }
-            return success;
-        }
-    }
-
-    @Override
-    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     public boolean notifyDisconnection(DisconnectionNotificationCallback disconnectionNotificationCallback) {
         synchronized (lock) {
             boolean success = false;
