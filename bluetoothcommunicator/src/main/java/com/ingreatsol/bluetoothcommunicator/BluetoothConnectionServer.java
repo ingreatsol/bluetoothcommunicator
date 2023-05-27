@@ -258,6 +258,9 @@ class BluetoothConnectionServer extends BluetoothConnection {
                     if (index != -1) {
                         if (!channels.get(index).getPeer().isDisconnecting()) {
                             if (!channels.get(index).getPeer().isConnected() && !channels.get(index).getPeer().isReconnecting()) {
+                                String data = new String(value, StandardCharsets.UTF_8);
+                                channels.get(index).getPeer().setUniqueName(data);
+
                                 notifyConnectionRequest(channels.get(index));
                                 bluetoothGattServer.sendResponse(device, requestId, ACCEPT, offset, null);
                             } else if (channels.get(index).getPeer().isReconnecting()) {

@@ -77,10 +77,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof MessageHolder) {
             Message message = mResults.get(position);
-            if (holder instanceof ReceivedHolder && message.getSender() != null && message.getSender().getDevice().getName().equals(myUniqueName)) {
+            if (holder instanceof ReceivedHolder && message.getSender() != null && message.getSender().toString().equals(myUniqueName)) {
                 ((ReceivedHolder) holder).text.setVisibility(View.GONE);
                 ((ReceivedHolder) holder).containerSender.setVisibility(View.VISIBLE);
-                ((ReceivedHolder) holder).sender.setText(message.getSender().getDevice().getName());
+                ((ReceivedHolder) holder).sender.setText(message.getSender().getName());
             }
             ((MessageHolder) holder).setText(message.getText());
         }
@@ -90,7 +90,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public int getItemViewType(int position) {
         Message message = mResults.get(position);
-        if (message.getSender() == null || message.getSender().getDevice().getName().equals(myUniqueName)) {
+        if (message.getSender() == null || message.getSender().toString().equals(myUniqueName)) {
             return MINE;
         } else {
             return NON_MINE;

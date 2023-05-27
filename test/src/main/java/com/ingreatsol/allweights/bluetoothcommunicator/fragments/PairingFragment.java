@@ -156,8 +156,7 @@ public class PairingFragment extends Fragment {
                 synchronized (lock) {
                     if (listView != null) {
                         BluetoothAdapter bluetoothAdapter = global.getBluetoothCommunicator().getBluetoothAdapter();
-                        Log.e("peer", peer.toString());
-                        Log.e("peer", peer.getName());
+                        Log.d("peer", peer.toString());
                         int index = listView.indexOfPeer(peer.toString());
                         if (index == -1) {
                             listView.add(peer);

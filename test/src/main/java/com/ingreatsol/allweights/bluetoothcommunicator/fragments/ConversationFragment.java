@@ -74,13 +74,13 @@ public class ConversationFragment extends Fragment {
             @Override
             public void onConnectionLost(Peer peer) {
                 super.onConnectionLost(peer);
-                Toast.makeText(activity,"Connection lost, reconnecting...",Toast.LENGTH_LONG).show();
+                Toast.makeText(activity, "Connection lost, reconnecting...", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onConnectionResumed(Peer peer) {
                 super.onConnectionResumed(peer);
-                Toast.makeText(activity,"Connection resumed",Toast.LENGTH_LONG).show();
+                Toast.makeText(activity, "Connection resumed", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -150,7 +150,7 @@ public class ConversationFragment extends Fragment {
             }
         };
 
-        mAdapter = new MessagesAdapter(global.getBluetoothCommunicator().getBluetoothAdapter().getName(), () -> {
+        mAdapter = new MessagesAdapter(global.getBluetoothCommunicator().getUniqueName(), () -> {
             description.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.VISIBLE);
         });
@@ -198,7 +198,7 @@ public class ConversationFragment extends Fragment {
         animation.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-                if(loading != null) {
+                if (loading != null) {
                     loading.setVisibility(View.VISIBLE);
                 }
             }

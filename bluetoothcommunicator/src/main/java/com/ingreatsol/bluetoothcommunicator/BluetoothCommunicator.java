@@ -1244,6 +1244,12 @@ public class BluetoothCommunicator {
         });
     }
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
+    public String getUniqueName() {
+        assert bluetoothAdapter != null;
+        return bluetoothAdapter.getName() + uniqueName;
+    }
+
     public static abstract class Callback extends BluetoothConnection.Callback {
         /**
          * Notify that advertise has started, if you want to do something after the start of advertising do it here, because

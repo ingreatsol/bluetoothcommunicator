@@ -241,8 +241,9 @@ abstract class BluetoothConnection {
 
     public abstract void readPhy(Peer peer);
 
+    @RequiresPermission("android.permission.BLUETOOTH_CONNECT")
     protected String getUniqueName() {
-        return uniqueName;
+        return bluetoothAdapter.getName() + uniqueName;
     }
 
     protected void setUniqueName(String uniqueName) {

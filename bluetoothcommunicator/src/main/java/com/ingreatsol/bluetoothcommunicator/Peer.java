@@ -40,9 +40,9 @@ import java.util.ArrayList;
  */
 public class Peer implements Parcelable, Cloneable {
     @NonNull
-    private final String uniqueName;
+    private String uniqueName;
     @NonNull
-    private final String name;
+    private String name;
     @NonNull
     private BluetoothDevice device;
     private boolean isHardwareConnected = false;
@@ -109,7 +109,9 @@ public class Peer implements Parcelable, Cloneable {
         if (obj instanceof Peer) {
             Peer peer = (Peer) obj;
             // check that prioritizing the name is not a problem
-            return toString().equals(peer.toString());
+            if (device.getAddress() != null && peer.getDevice().getAddress() != null) {
+                return device.getAddress().equals(peer.getDevice().getAddress());
+            }
         }
 
         if (obj instanceof Channel) {
@@ -175,6 +177,18 @@ public class Peer implements Parcelable, Cloneable {
      */
     public void setDevice(@NonNull BluetoothDevice device) {
         this.device = device;
+    }
+
+    /**
+     * Sets the unique name of this peer.
+     *
+     * @param uniqueName name
+     */
+    public void setUniqueName(@NonNull String uniqueName) {
+        if (uniqueName.length() >= 2) {
+            this.uniqueName = uniqueName.substring(uniqueName.length() - 2);
+            this.name = uniqueName.substring(0, uniqueName.length() - 2);
+        }
     }
 
     /**
