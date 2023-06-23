@@ -22,7 +22,6 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -199,7 +198,7 @@ public class ButtonSearch extends AppCompatImageButton {
     }
 
     public Drawable getDrawable(int id) {
-        Drawable drawable = getResources().getDrawable(id, null);
+        Drawable drawable = getResources().getDrawable(id, getContext().getTheme());
         drawable.setTintList(getColorStateList(getContext(), R.color.primary));
         return drawable;
     }

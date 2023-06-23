@@ -85,14 +85,11 @@ public class CustomAnimator {
 
     public Animator createAnimatorWidth(final View view, int initialPixels, int finalPixels, int duration) {
         ValueAnimator animator = ValueAnimator.ofInt(initialPixels, finalPixels);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                if(view!=null) {
-                    ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-                    layoutParams.width = (int) valueAnimator.getAnimatedValue();
-                    view.setLayoutParams(layoutParams);
-                }
+        animator.addUpdateListener(valueAnimator -> {
+            if(view!=null) {
+                ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+                layoutParams.width = (int) valueAnimator.getAnimatedValue();
+                view.setLayoutParams(layoutParams);
             }
         });
         animator.setDuration(duration);

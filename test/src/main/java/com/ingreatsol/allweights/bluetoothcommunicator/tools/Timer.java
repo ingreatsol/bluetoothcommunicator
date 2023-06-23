@@ -19,15 +19,16 @@ package com.ingreatsol.allweights.bluetoothcommunicator.tools;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
+
 import com.ingreatsol.bluetoothcommunicator.tools.CustomCountDownTimer;
 
+import org.jetbrains.annotations.Contract;
+
 public class Timer {
-    private final long hourMillis=3600000;
-    private final long minuteMillis=60000;
-    private final long secondMillis=1000;
-    private CustomCountDownTimer timer;
-    private long duration;
-    private Handler mainHandler;
+    private final CustomCountDownTimer timer;
+    private final long duration;
+    private final Handler mainHandler;
 
     public Timer(long durationMillis, final DateCallback dateCallback){
         mainHandler = new Handler(Looper.getMainLooper());
@@ -63,44 +64,39 @@ public class Timer {
     }
 
     public void start(){
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                timer.start();
-            }
-        });
+        mainHandler.post(timer::start);
     }
 
     public void cancel(){
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                timer.cancel();
-            }
-        });
+        mainHandler.post(timer::cancel);
     }
 
     public int[] getDuration(){
         return convertIntoDate(duration);
     }
 
+    @NonNull
+    @Contract(value = "_ -> new", pure = true)
     private int[] convertIntoDate(long millis){
         int hours=0;
         int minutes=0;
         int seconds=0;
-        if(millis>hourMillis){
-            long rest=millis%hourMillis;
-            hours= (int) ((millis-rest)/hourMillis);
+        long hourMillis = 3600000;
+        if(millis> hourMillis){
+            long rest=millis% hourMillis;
+            hours= (int) ((millis-rest)/ hourMillis);
             millis=rest;
         }
-        if(millis>minuteMillis){
-            long rest=millis%minuteMillis;
-            minutes= (int) ((millis-rest)/minuteMillis);
+        long minuteMillis = 60000;
+        if(millis> minuteMillis){
+            long rest=millis% minuteMillis;
+            minutes= (int) ((millis-rest)/ minuteMillis);
             millis=rest;
         }
-        if(millis>secondMillis){
-            long rest=millis%secondMillis;
-            seconds= (int) ((millis-rest)/secondMillis);
+        long secondMillis = 1000;
+        if(millis> secondMillis){
+            long rest=millis% secondMillis;
+            seconds= (int) ((millis-rest)/ secondMillis);
         }
 
         return new int[]{hours,minutes,seconds};
